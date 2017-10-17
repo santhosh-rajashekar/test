@@ -35,6 +35,7 @@ module.exports = (app) => {
   app.post(urlPrefix + '/api/datauavs/get-component', uavController.listById);
   app.post(urlPrefix + '/api/datauavs/:id/history', uavController.update);
   app.post(urlPrefix + '/api/create-serial-number', uavController.createSerialNumber);
+  app.get(urlPrefix + '/api/datauavs/delete/:id', uavController.delete);
 
   app.post(urlPrefix + '/api/partnumber', partnumberController.create);
   app.post(urlPrefix + '/api/create-components', partnumberController.createDefaultUavDataComponent);

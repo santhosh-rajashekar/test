@@ -134,11 +134,11 @@ module.exports = {
             });
         }).catch(error => {
           console.log(error);
-          res.status(400).send(error);
+          res.status(500).send(error);
         });
       })
       .catch(error => {
-        res.status(400).send(error)
+        res.status(500).send(error)
       });
   },
 
@@ -155,11 +155,24 @@ module.exports = {
 
     uavRepository.ifSerialNumberExists(serials, (result) => {
       if (!result) {
-        res.status(200).send({"serial_number": serial_number});
-      }
-      else {
+        res.status(200).send({
+          "serial_number": serial_number
+        });
+      } else {
         this(req, res);
       }
     });
+  },
+
+  delete(req, res) {
+    return datauavs.destroy({
+        where: {
+          id: req.params.id
+        }
+      })
+      .then(() => res.status(200).send('Deleted'))
+      .catch(error => {
+        res.status(500).send(error)
+      });
   },
 };
