@@ -14,8 +14,8 @@ module.exports = {
         name: req.body.name,
         data: req.body.data
       })
-      .then( partnumber => res.status(200).send(partnumber))
-      .catch( error => res.status(400).send(error));
+      .then(partnumber => res.status(200).send(partnumber))
+      .catch(error => res.status(400).send(error));
   },
 
   createDefaultUavDataComponent(req, res) {
@@ -26,10 +26,9 @@ module.exports = {
           model: req.body.model,
           name: req.body.name
         }
-      }).then( partnumber => {
+      }).then(partnumber => {
 
-        if(!partnumber) {
-
+        if (!partnumber) {
           return res.status(400).send('Entity does not found');
         }
 
@@ -39,7 +38,7 @@ module.exports = {
 
         var generate_serials = () => {
           var serials = [];
-          for(let i=0; i < components.fcs.length; i++) {
+          for (let i = 0; i < components.fcs.length; i++) {
             components.fcs[i].serial_number = generateSerialNumber.generate('F');
             serials.push({
               serial_number: components.fcs[i].serial_number,
@@ -47,7 +46,7 @@ module.exports = {
             });
           }
 
-          for(let i=0; i < components.batteries.length; i++) {
+          for (let i = 0; i < components.batteries.length; i++) {
             components.batteries[i].serial_number = generateSerialNumber.generate('B');
             serials.push({
               serial_number: components.batteries[i].serial_number,
@@ -55,7 +54,7 @@ module.exports = {
             });
           }
 
-          for(let i=0; i < components.components.length; i++) {
+          for (let i = 0; i < components.components.length; i++) {
             components.components[i].bldc.serial_number = generateSerialNumber.generate('M');
             serials.push({
               serial_number: components.components[i].bldc.serial_number,
@@ -96,8 +95,7 @@ module.exports = {
                   console.log(error);
                   res.status(400).send(error)
                 });
-            }
-            else {
+            } else {
               check_serials();
             }
           });
@@ -109,7 +107,5 @@ module.exports = {
         console.log(error);
         res.status(400).send(error)
       });
-
   }
-
 };
