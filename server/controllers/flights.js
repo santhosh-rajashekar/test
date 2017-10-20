@@ -54,6 +54,40 @@ module.exports = {
         return res.status(500).send(err);
       }
 
+      var _supported = [true, 'true'].indexOf(req.params.supportedDrone) >= 0;
+      var _create_final_file = function (req, res, flights) {
+        let _destination_dir = DIR_UPLOADED;
+        try {
+          // console.log('req.params: ', req.params);
+          if (!_supported) {
+            _destination_dir += '/unsupported/';
+          }
+
+          let _destination_filename = [
+            'datafile',
+            req.params.manufacturer,
+            req.params.model,
+            _supported ? flights.id : (new Date().getTime()).toString()
+          ].join('_') + path.extname(req.file.filename);
+
+          _destination_filename = _destination_filename.toLowerCase();
+
+          console.log("\n\n _destination_filename:", _destination_filename);
+
+          fs.renameSync(DIR_UPLOADS + req.file.filename, _destination_dir + _destination_filename);
+          fs.accessSync(_destination_dir + _destination_filename, fs.constants.R_OK | fs.constants.W_OK);
+
+          res.status(200).send('File ' + req.file.originalname + ' (' + _destination_filename + ') was uploaded successfully!');
+        } catch (error) {
+          res.status(500).send(error);
+        }
+      };
+
+      if (!_supported) {
+        _create_final_file(req, res, {id:0});
+        return;
+      }
+
       return datauavs.findById(req.params.uavid)
         .then(datauavs => {
           if (!datauavs) {
@@ -80,25 +114,12 @@ module.exports = {
               uav_id: req.params.uavid
             })
             .then(flights => {
-              try {
-                let _destination_dir = DIR_UPLOADED;
-
-                // console.log('req.params: ', req.params);
-                if ([true, 'true'].indexOf(req.params.supportedDrone) < 0) {
-                  _destination_dir += '/unsupported/';
-                }
-
-                fs.renameSync(DIR_UPLOADS + req.file.filename, _destination_dir + 'datafile_' + flights.id + path.extname(req.file.filename.toLowerCase()));
-                fs.accessSync(_destination_dir + 'datafile_' + flights.id + path.extname(req.file.filename.toLowerCase()), fs.constants.R_OK | fs.constants.W_OK);
-
-              } catch (error) {
-                res.status(500);
-                res.end(error);
-                return;
-              }
-              res.end('File ' + req.file.originalname + ' (' + req.file.filename + ') was uploaded successfully!');
+              _create_final_file(req, res, flights);
             })
-            .catch(error => res.status(500).send(error));
+            .catch(error => {
+              console.log(error);
+              res.status(500).send(error);
+            });
         })
         .catch(error => {
           console.log(error);

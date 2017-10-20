@@ -26,7 +26,7 @@ module.exports = (app) => {
   app.post(urlPrefix + '/api/flight', flightController.create);
   app.post(urlPrefix + '/api/flights', flightController.list);
   app.post(urlPrefix + '/api/flight/status', flightController.getStatus);
-  app.post(urlPrefix + '/api/fileupload/:uavid/:batteryIndex/:supportedDrone', flightController.fileupload);
+  app.post(urlPrefix + '/api/fileupload/:uavid/:batteryIndex/:supportedDrone/:manufacturer/:model', flightController.fileupload);
   app.post(urlPrefix + '/api/flight/component-confirmation', flightController.componentConfirmation);
   app.get(urlPrefix + '/api/flights/check-changes/:hash', flightController.checkFlightsChanges);
   
@@ -35,6 +35,7 @@ module.exports = (app) => {
   app.post(urlPrefix + '/api/datauavs/get-component', uavController.listById);
   app.post(urlPrefix + '/api/datauavs/:id/history', uavController.update);
   app.post(urlPrefix + '/api/create-serial-number', uavController.createSerialNumber);
+  app.get(urlPrefix + '/api/datauavs/delete/:id', uavController.delete);
 
   app.post(urlPrefix + '/api/partnumber', partnumberController.create);
   app.post(urlPrefix + '/api/create-components', partnumberController.createDefaultUavDataComponent);
