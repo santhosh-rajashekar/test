@@ -18,6 +18,13 @@ module.exports = {
       .catch(error => res.status(400).send(error));
   },
 
+  list(req, res) {
+    return partnumber
+      .all()
+      .then(partnumber => res.status(200).send(partnumber))
+      .catch(error => res.status(400).send(error));
+  },
+
   createDefaultUavDataComponent(req, res) {
 
     return partnumber

@@ -38,5 +38,6 @@ module.exports = (app) => {
   app.get(urlPrefix + '/api/datauavs/delete/:id', uavController.delete);
 
   app.post(urlPrefix + '/api/partnumber', partnumberController.create);
+  app.get(urlPrefix + '/api/partnumbers', partnumberController.list);
   app.post(urlPrefix + '/api/create-components', partnumberController.createDefaultUavDataComponent);
 };
