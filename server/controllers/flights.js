@@ -49,7 +49,7 @@ module.exports = {
     upload(req, res, function (err) {
 
       if (err) {
-        // An error occurred when uploading 
+        // An error occurred when uploading
         // console.log('err: ', err);
         return res.status(500).send(err);
       }
@@ -133,7 +133,8 @@ module.exports = {
         where: {
           uav_id: {
             [Op.in]: req.body.ids
-          }
+          },
+            is_archived: false
         },
         order: [
           ['id', 'DESC']
