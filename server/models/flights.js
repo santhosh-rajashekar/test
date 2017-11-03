@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
   flights.associate = (models) => {
     flights.belongsTo(models.datauavs, {
       foreignKey: 'uav_id',
-      onDelete: 'CASCADE',
+      onDelete: 'CASCADE'
     });
   };
   return flights;

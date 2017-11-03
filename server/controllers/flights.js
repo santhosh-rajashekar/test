@@ -261,5 +261,30 @@ module.exports = {
             m: error
           });
       });
+  },
+
+  archivedFlight(req, res) {
+
+    return flights.findById(req.params.id)
+    .then(flights => {
+
+      if ( !flights ) {
+        return res.status(404).send({
+          message: 'Flight Not Found'
+        });
+      }
+
+      return flights.update({
+        is_archived: true
+      }).then(flights => {
+        return res.status(200).send(flights);
+      }).catch(error => {
+          console.log(error);
+        res.status(500).send(error);
+      });
+    }).catch(error => {
+      console.log(error);
+      res.status(500).send(error);
+    });
   }
 };
