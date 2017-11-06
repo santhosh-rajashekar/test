@@ -31,7 +31,7 @@ const statusCheckedStorage = multer.diskStorage({
         cb(null, DIR_UPLOADS);
     },
     filename: function(req, file, cb) {
-        cb(null, 'statusfile_' + req.params.filename + path.extname(file.originalname.toLowerCase()));
+        cb(null, req.params.filename + path.extname(file.originalname.toLowerCase()));
     },
     limits: {
         fileSize: 2 * 1024 * 1024
@@ -69,6 +69,8 @@ module.exports = {
                 // An error occurred when uploading
                 return res.status(500).send(err);
             }
+
+            res.status(200).send('File ' + req.file.originalname + 'was uploaded successfully!');
         });
     },
     fileupload(req, res) {
@@ -224,6 +226,7 @@ module.exports = {
             let _component = req.body.component; // propulsion | battery | flight_controller
             let _checked = req.body.checked;
             let _checked_note = req.body.checked_note;
+            let _uploadedFileName = req.body.uploadedFileName;
 
             return flights.findById(_flight_id)
                 .then(flight => {
@@ -235,6 +238,7 @@ module.exports = {
 
                         flight.data.result.flight_component[_component].checked = _checked;
                         flight.data.result.flight_component[_component].checked_note = _checked_note;
+                        flight.data.result.flight_component[_component].uploadedFileName = _uploadedFileName;
 
                         return flight.update({
                                 data: flight.data
