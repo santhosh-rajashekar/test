@@ -194,7 +194,7 @@ module.exports = {
   },
   componentConfirmation(req, res) {
     try {
-      let _flight_id = req.body.id;
+      let _flight_id = req.params.id;
       let _component = req.body.component; // propulsion | battery | flight_controller
       let _checked = req.body.checked;
       let _checked_note = req.body.checked_note;

@@ -23,12 +23,33 @@ module.exports = (app) => {
     message: 'Welcome to the Todos API!',
   }));
 
+
   app.post(urlPrefix + '/api/flight', flightController.create);
   app.post(urlPrefix + '/api/flights', flightController.list);
+
+  /**
+   * @api {post} /api/flight/:id archive flight analysis
+   * @apiName archive flight analysis
+   * @apiGroup Flight
+   * @apiExample Example usage:
+   * curl -i http://0.0.0.0:3000/api/flight/:id
+   *
+   * @apiSuccess {json} archived flight.
+   */
   app.post(urlPrefix + '/api/flight/:id', flightController.archivedFlight);
+
+  /**
+   * @api {get} /api/flight/status Get flight status
+   * @apiName Get flight status
+   * @apiGroup Flight
+   * @apiExample Example usage:
+   * curl -i http://0.0.0.0:3000/api/flight/status
+   *
+   * @apiSuccess {json} flight status.
+   */
   app.post(urlPrefix + '/api/flight/status', flightController.getStatus);
   app.post(urlPrefix + '/api/fileupload/:uavid/:batteryIndex/:supportedDrone/:manufacturer/:model', flightController.fileupload);
-  app.post(urlPrefix + '/api/flight/component-confirmation', flightController.componentConfirmation);
+  app.post(urlPrefix + '/api/flight/:id/component-confirmation', flightController.componentConfirmation);
   app.get(urlPrefix + '/api/flights/check-changes/:hash', flightController.checkFlightsChanges);
   
   app.post(urlPrefix + '/api/datauavs', uavController.create);
@@ -38,7 +59,26 @@ module.exports = (app) => {
   app.post(urlPrefix + '/api/create-serial-number', uavController.createSerialNumber);
   app.get(urlPrefix + '/api/datauavs/delete/:id', uavController.delete);
 
+  /**
+   * @api {post} /api/partnumber Create partnumber entry
+   * @apiName Create partnumber
+   * @apiGroup Partnumber
+   * @apiExample Example usage:
+   * curl -i http://0.0.0.0:3000/api/partnumbers
+   *
+   * @apiSuccess {json} partnumbers.
+   */
   app.post(urlPrefix + '/api/partnumber', partnumberController.create);
+
+  /**
+   * @api {get} /api/partnumbers Get All partnumbers
+   * @apiName GetPartnumbers
+   * @apiGroup Partnumber
+   * @apiExample Example usage:
+   * curl -i http://0.0.0.0:3000/api/partnumbers
+   *
+   * @apiSuccess {json} partnumbers.
+   */
   app.get(urlPrefix + '/api/partnumbers', partnumberController.list);
   app.post(urlPrefix + '/api/create-components', partnumberController.createDefaultUavDataComponent);
 };
