@@ -47,7 +47,7 @@ module.exports = {
       user : 'lhtdev',
       host : 'hcm-test-web-host1.westeurope.cloudapp.azure.com',
       ref  : 'origin/demo',
-      repo : 'https://saahmed:05SAS3014!@git.altran.de/lufthansa/backend.git',
+      repo : 'https://saahmed@git.altran.de/lufthansa/backend.git',
       ssh_options: ["StrictHostKeyChecking=no", "PasswordAuthentication=yes"],
       path : '/home/lhtdev/hcm/backend',
       'post-deploy' : 'npm install && pm2 startOrRestart ecosystem.config.js --env test',
