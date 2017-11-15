@@ -25,7 +25,7 @@ module.exports = {
   deploy : {
     production : {
       user : 'node',
-      host : 'hcm-app.westeurope.cloudapp.azure.com',
+      host : 'hcm-test-web-host1.westeurope.cloudapp.azure.com',
       ref  : 'origin/master',
       repo : 'git@github.com:repo.git',
       path : '/var/www/production',
@@ -33,12 +33,24 @@ module.exports = {
     },
     test : {
       user : 'lhtdev',
-      host : 'test-hcm-app.westeurope.cloudapp.azure.com',
-      ref  : 'origin/master',
-      repo : 'https://saahmed:Altran2015!@git.altran.de/lufthansa/backend.git',
+      host : 'hcm-test-web-host1.westeurope.cloudapp.azure.com',
+      ref  : 'origin/demo',
+      repo : 'https://saahmed@git.altran.de/lufthansa/backend.git',
       ssh_options: ["StrictHostKeyChecking=no", "PasswordAuthentication=yes"],
       path : '/home/lhtdev/hcm/backend',
-      'post-deploy' : 'npm install && pm2 reload ecosystem.config.js --env test',
+      'post-deploy' : 'npm install && pm2 startOrRestart ecosystem.config.js --env test',
+      env  : {
+        NODE_ENV: 'test'
+      }
+    },
+    demo : {
+      user : 'lhtdev',
+      host : 'hcm-test-web-host1.westeurope.cloudapp.azure.com',
+      ref  : 'origin/demo',
+      repo : 'https://saahmed:05SAS3014!@git.altran.de/lufthansa/backend.git',
+      ssh_options: ["StrictHostKeyChecking=no", "PasswordAuthentication=yes"],
+      path : '/home/lhtdev/hcm/backend',
+      'post-deploy' : 'npm install && pm2 startOrRestart ecosystem.config.js --env test',
       env  : {
         NODE_ENV: 'test'
       }
