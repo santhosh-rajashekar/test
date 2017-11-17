@@ -53,7 +53,7 @@ module.exports = (app) => {
     app.get(urlPrefix + '/api/flights/check-changes/:hash', flightController.checkFlightsChanges);
     app.post(urlPrefix + '/api/statuscheckfileupload/:filename', flightController.componentCheckedStatusFileUpload);
 
-    app.post(urlPrefix + '/api/datauavs', uavController.create);
+    app.post(urlPrefix + '/api/datauavs/create', uavController.create);
     app.get(urlPrefix + '/api/datauavs', uavController.list);
     app.post(urlPrefix + '/api/datauavs/get-component', uavController.listById);
     app.post(urlPrefix + '/api/datauavs/:id/history', uavController.update);
