@@ -27,6 +27,7 @@ module.exports = (app) => {
   app.post(urlPrefix + '/api/flights', flightController.list);
   app.post(urlPrefix + '/api/flight/status', flightController.getStatus);
   app.post(urlPrefix + '/api/fileupload/:uavid/:batteryIndex/:supportedDrone/:manufacturer/:model', flightController.fileupload);
+  app.post(urlPrefix + '/api/fileupload/:uavid/:batteryIndex/:supportedDrone/:manufacturer/:model', flightController.fileupload);
   app.post(urlPrefix + '/api/flight/component-confirmation', flightController.componentConfirmation);
   app.get(urlPrefix + '/api/flights/check-changes/:hash', flightController.checkFlightsChanges);
   
