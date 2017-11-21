@@ -1,0 +1,19 @@
+{
+  "name": "HCM API",
+  "version": "0.3.0",
+  "description": "Api for HCM application",
+  "title": "Api for HCM application",
+  "url" : "http://0.0.0.0:3000",
+  "header": {
+    "title": "",
+    "filename": ""
+  },
+  "footer": {
+    "title": "",
+    "filename": ""
+  },
+  "template": {
+    "withCompare": true,
+    "withGenerator": true
+  }
+}
