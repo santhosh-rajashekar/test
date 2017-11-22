@@ -73,6 +73,7 @@ module.exports = {
             res.status(200).send('File ' + req.file.originalname + 'was uploaded successfully!');
         });
     },
+    /* page reload lost the upload history and upload file*/
     fileupload(req, res) {
         upload(req, res, function(err) {
 
@@ -322,6 +323,34 @@ module.exports = {
                     console.log(error);
                     res.status(500).send(error);
                 });
+            }).catch(error => {
+                console.log(error);
+                res.status(500).send(error);
+            });
+    },
+
+    isDuplicateFile (req, res) {
+        return flights.findById(req.params.id) 
+            .then(flights => {
+
+                if (!flights) {
+                    return res.status(404).send({
+                        message: 'Flight Not Found'
+                    });
+                }
+
+                console.log("flight_hash: ", flights.file_md5_hash);
+                console.log("body_hash: ", req.body.hash);
+                if(flights.file_md5_hash == req.body.hash) {
+                    return res.status(200).send({
+                        isDuplicate: true
+                    });
+                } else {
+                    return res.status(200).send({
+                        isDuplicate: false
+                    });
+                }
+
             }).catch(error => {
                 console.log(error);
                 res.status(500).send(error);

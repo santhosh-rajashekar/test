@@ -51,6 +51,7 @@ module.exports = (app) => {
     app.post(urlPrefix + '/api/fileupload/:uavid/:batteryIndex/:supportedDrone/:manufacturer/:model/:md5hash', flightController.fileupload);
     app.post(urlPrefix + '/api/flight/:id/component-confirmation', flightController.componentConfirmation);
     app.get(urlPrefix + '/api/flights/check-changes/:hash', flightController.checkFlightsChanges);
+    app.post(urlPrefix + '/api/flights/is-duplicate-file/:id', flightController.isDuplicateFile);
     app.post(urlPrefix + '/api/statuscheckfileupload/:filename', flightController.componentCheckedStatusFileUpload);
 
     app.post(urlPrefix + '/api/datauavs/create', uavController.create);
