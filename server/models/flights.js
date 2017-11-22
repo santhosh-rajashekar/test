@@ -5,7 +5,8 @@ module.exports = (sequelize, DataTypes) => {
     metadata: DataTypes.JSONB,
     data: DataTypes.JSONB,
     is_archived: DataTypes.BOOLEAN,
-    filename: DataTypes.STRING
+    filename: DataTypes.STRING,
+    file_md5_hash: DataTypes.STRING
   });
 
   flights.associate = (models) => {

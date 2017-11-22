@@ -127,6 +127,10 @@ module.exports = {
                     // console.log(datauavs.data);
                     let _metadata = datauavs.data;
                     _metadata.upload_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+                    /*
+                    * we are saving duplicate of this file name on metadata and filename column
+                    * for changing the database structure json to relational.
+                    */
                     _metadata.upload_filename = req.file.originalname;
 
                     if ([true, 'true'].indexOf(req.params.supportedDrone) >= 0) {
@@ -139,7 +143,13 @@ module.exports = {
                     return flights
                         .create({
                             metadata: _metadata,
-                            uav_id: req.params.uavid
+                            uav_id: req.params.uavid,
+                            /*
+                            * we are saving duplicate of this file name on metadata and filename column
+                            * for changing the database structure json to relational.
+                            */
+                            filename: _metadata.upload_filename,
+                            file_md5_hash: req.params.md5hash
                         })
                         .then(flights => {
                             _create_final_file(req, res, flights);

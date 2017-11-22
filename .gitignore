@@ -1,6 +1,7 @@
 
 .idea/
-uploads/
+uploads/*
+uploaded/*
 
 # Created by https://www.gitignore.io/api/node,macos,emacs,netbeans,jetbrains
 

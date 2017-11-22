@@ -46,7 +46,7 @@ module.exports = {
         NODE_ENV: 'test'
       },
       path : '/home/lhtdev/hcm/backend',
-      'post-deploy' : 'npm install; cp /home/lhtdev/secretconfig/ecosystem.config.js ./ecosystem.config.js; sequelize db:migrate --env test; ln -sf /data/hcm uploaded; ln -sf /data/hcm/temp uploads;  pm2 startOrRestart ecosystem.config.js --update-env --env test'
+      'post-deploy' : 'npm install; cp /home/lhtdev/secretconfig/ecosystem.config.js ./ecosystem.config.js; sequelize db:migrate --env test; ln -sf /data/hcm uploaded; ln -sf /data/hcm/temp uploads; pm2 startOrRestart ecosystem.config.js --update-env --env test'
     },
     demo : {
       user : 'lhtdev',
