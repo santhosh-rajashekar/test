@@ -1,26 +1,26 @@
 {
-  "test": {
-    "username": "postgres",
-    "password": "postgres",
-    "database": "hcm",
-    "host": "127.0.0.1",
-    "port": 5432,
-    "dialect": "postgres"
-  },
-  "development": {
-    "username": "postgres",
-    "password": "postgres",
-    "database": "hcm",
-    "host": "127.0.0.1",
-    "port": 5432,
-    "dialect": "postgres"
-  },
-  "production": {
-    "username": "hcm",
-    "password": "hcm",
-    "database": "hcm",
-    "host": "127.0.0.1",
-    "port": 5432,
-    "dialect": "postgres"
-  }
+    "test": {
+        "username": "testhcm",
+        "password": "testhcm",
+        "database": "testhcm",
+        "host": "127.0.0.1",
+        "port": 5432,
+        "dialect": "postgres"
+    },
+    "development": {
+        "username": "postgres",
+        "password": "postgres",
+        "database": "hcm",
+        "host": "127.0.0.1",
+        "port": 5432,
+        "dialect": "postgres"
+    },
+    "production": {
+        "username": "hcm",
+        "password": "hcm",
+        "database": "hcm",
+        "host": "127.0.0.1",
+        "port": 5432,
+        "dialect": "postgres"
+    }
 }
