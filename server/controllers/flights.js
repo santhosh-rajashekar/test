@@ -330,30 +330,29 @@ module.exports = {
     },
 
     isDuplicateFile (req, res) {
-        return flights.findById(req.params.id) 
-            .then(flights => {
+        return flights.count({
+            where: {
+                uav_id: req.params.id,
+                file_md5_hash: req.body.md5hash,
+                is_archived: false
+            }
+        }) 
+        .then(flights => {
+            
+            console.log(flights);
+            if(flights > 0) {
+                return res.status(200).send({
+                    isDuplicate: true
+                });
+            } else {
+                return res.status(200).send({
+                    isDuplicate: false
+                });
+            }
 
-                if (!flights) {
-                    return res.status(404).send({
-                        message: 'Flight Not Found'
-                    });
-                }
-
-                console.log("flight_hash: ", flights.file_md5_hash);
-                console.log("body_hash: ", req.body.hash);
-                if(flights.file_md5_hash == req.body.hash) {
-                    return res.status(200).send({
-                        isDuplicate: true
-                    });
-                } else {
-                    return res.status(200).send({
-                        isDuplicate: false
-                    });
-                }
-
-            }).catch(error => {
-                console.log(error);
-                res.status(500).send(error);
-            });
+        }).catch(error => {
+            console.log(error);
+            res.status(500).send(error);
+        });
     }
 };
