@@ -76,14 +76,14 @@ module.exports = {
     /* page reload lost the upload history and upload file*/
     fileupload(req, res) {
         upload(req, res, function(err) {
-
+            console.log('drone:', JSON.parse(req.body.data).uavid);
             if (err) {
                 // An error occurred when uploading
                 // console.log('err: ', err);
                 return res.status(500).send(err);
             }
 
-            var _supported = [true, 'true'].indexOf(req.params.supportedDrone) >= 0;
+            var _supported = [true, 'true'].indexOf(JSON.parse(req.body.data).supportedDrone) >= 0;
             var _create_final_file = function(req, res, flights) {
                 let _destination_dir = DIR_UPLOADED;
                 try {
@@ -94,8 +94,8 @@ module.exports = {
 
                     let _destination_filename = [
                         'datafile',
-                        req.params.manufacturer,
-                        req.params.model,
+                        JSON.parse(req.body.data).manufacturer,
+                        JSON.parse(req.body.data).model,
                         _supported ? flights.id : (new Date().getTime()).toString()
                     ].join('_') + path.extname(req.file.filename);
 
@@ -117,7 +117,7 @@ module.exports = {
                 return;
             }
 
-            return datauavs.findById(req.params.uavid)
+            return datauavs.findById(JSON.parse(req.body.data).uavid)
                 .then(datauavs => {
                     if (!datauavs) {
                         return res.status(404).send({
@@ -134,23 +134,23 @@ module.exports = {
                     */
                     _metadata.upload_filename = req.file.originalname;
 
-                    if ([true, 'true'].indexOf(req.params.supportedDrone) >= 0) {
+                    if ([true, 'true'].indexOf(JSON.parse(req.body.data).supportedDrone) >= 0) {
                         _metadata.battery = {
-                            serial_number: _metadata.batteries[req.params.batteryIndex].serial_number,
-                            part_no: _metadata.batteries[req.params.batteryIndex].part_no
+                            serial_number: _metadata.batteries[JSON.parse(req.body.data).batteryIndex].serial_number,
+                            part_no: _metadata.batteries[JSON.parse(req.body.data).batteryIndex].part_no
                         };
                     }
 
                     return flights
                         .create({
                             metadata: _metadata,
-                            uav_id: req.params.uavid,
+                            uav_id: JSON.parse(req.body.data).uavid,
                             /*
                             * we are saving duplicate of this file name on metadata and filename column
                             * for changing the database structure json to relational.
                             */
                             filename: _metadata.upload_filename,
-                            file_md5_hash: req.params.md5hash
+                            file_md5_hash: JSON.parse(req.body.data).md5hash
                         })
                         .then(flights => {
                             _create_final_file(req, res, flights);
