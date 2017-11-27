@@ -3,13 +3,30 @@
 const flights = require('../models').flights;
 const datauavs = require('../models').datauavs;
 
-const multer = require('multer');
-const fs = require('fs');
-const path = require("path");
-var _ = require('lodash');
+const express   = require('express');
+const mailer    = require('express-mailer');
+const multer    = require('multer');
+const fs        = require('fs');
+const path      = require("path");
+const moment    = require('moment');
+var _           = require('lodash');
 const Sequelize = require('sequelize');
 
 const Op = Sequelize.Op;
+const app = express();
+app.set('views', __dirname + '/../views');
+app.set('view engine', 'jade');
+const sendMailer = mailer.extend(app, {
+    from: 'hcm-admin@safe-drone.com',
+    host: 'smtp.safe-drone.com', // hostname
+    secureConnection: false, // use SSL
+    port: 587, // port for secure SMTP
+    transportMethod: 'SMTP', // default is SMTP. Accepts anything that nodemailer accepts
+    auth: {
+      user: 'hcm-admin@safe-drone.com',
+      pass: 'hcm0nlyc@nsend'
+    }
+  });
 
 const DIR_UPLOADS = './uploads/';
 const DIR_UPLOADED = './uploaded/';
@@ -286,6 +303,35 @@ module.exports = {
                 // console.log('req.params.hash: ', req.params.hash);
                 // console.log('_total: ', _total);
 
+                flights.findAll({
+                    attributes: ['id', 'data', 'createdAt', 'updatedAt'],
+                    where: {
+                        data: null,
+                        createdAt: {
+                            [Op.lt]: moment().subtract(30, 'minutes').toDate(),
+                        }
+                      }
+                }).then(flights => {
+                    if(!flights) {
+                        console.log('no flights found');    
+                    }
+                    // sendMailer.mailer.send('email', {
+                    //     to: 'saeed.ahmed@altran.com', // REQUIRED. This can be a comma delimited string just like a normal email to field. 
+                    //     subject: 'There is some problems in the data processing', // REQUIRED.
+                    //     otherProperty: 'Other Property' // All additional properties are also passed to the template as local variables.
+                    //   }, function (err) {
+                    //     if (err) {
+                    //       // handle error
+                    //       console.log(err);
+                    //       res.send('There was an error sending the email');
+                    //       return;
+                    //     }
+                    //     console.log('Email Sent');
+                    //   });
+                }).catch(error => {
+                    console.log(error);
+                });
+
                 res.status(200)
                     .send({
                         c: ((+req.params.hash >= 0 && +req.params.hash !== _total) ? 1 : 0),
@@ -354,5 +400,5 @@ module.exports = {
             console.log(error);
             res.status(500).send(error);
         });
-    }
+    },
 };
