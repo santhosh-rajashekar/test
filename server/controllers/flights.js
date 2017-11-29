@@ -277,7 +277,7 @@ module.exports = {
                             .catch(error => {
                                 console.log(error);
                                 res.status(500).send(error);
-                            });;
+                            });
                     } catch (error) {
                         console.log(error);
                         res.status(500).send(error);
@@ -307,14 +307,38 @@ module.exports = {
                     attributes: ['id', 'data', 'createdAt', 'updatedAt'],
                     where: {
                         data: null,
+                        is_archived: false,
                         createdAt: {
-                            [Op.lt]: moment().subtract(30, 'minutes').toDate(),
+                            [Op.lt]: moment().subtract(15, 'minutes').toDate(),
                         }
                       }
-                }).then(flights => {
-                    if(!flights) {
+                }).then(results => {
+                    if(!results) {
                         console.log('no flights found');    
                     }
+
+                    for (let entry of results) {
+                        console.log(JSON.stringify(entry));
+                    }
+
+                    flights.update({
+                        data: {"status": 6},
+                        updatedAt: moment().toDate(),
+                      }, {
+                        where: {
+                            data: null,
+                            is_archived: false,
+                            createdAt: {
+                                [Op.lt]: moment().subtract(15, 'minutes').toDate(),
+                            }
+                        }
+                      })
+                    .then(flights => {
+                        console.log('no flights found');    
+                    })
+                    .catch(error => {
+                        console.log('no flights found');    
+                    });
                     // sendMailer.mailer.send('email', {
                     //     to: 'saeed.ahmed@altran.com', // REQUIRED. This can be a comma delimited string just like a normal email to field. 
                     //     subject: 'There is some problems in the data processing', // REQUIRED.
