@@ -3,13 +3,30 @@
 const flights = require('../models').flights;
 const datauavs = require('../models').datauavs;
 
-const multer = require('multer');
-const fs = require('fs');
-const path = require("path");
-var _ = require('lodash');
+const express   = require('express');
+const mailer    = require('express-mailer');
+const multer    = require('multer');
+const fs        = require('fs');
+const path      = require("path");
+const moment    = require('moment');
+var _           = require('lodash');
 const Sequelize = require('sequelize');
 
 const Op = Sequelize.Op;
+const app = express();
+app.set('views', __dirname + '/../views');
+app.set('view engine', 'jade');
+const sendMailer = mailer.extend(app, {
+    from: 'hcm-admin@safe-drone.com',
+    host: 'smtp.safe-drone.com', // hostname
+    secureConnection: false, // use SSL
+    port: 587, // port for secure SMTP
+    transportMethod: 'SMTP', // default is SMTP. Accepts anything that nodemailer accepts
+    auth: {
+      user: 'hcm-admin@safe-drone.com',
+      pass: 'hcm0nlyc@nsend'
+    }
+  });
 
 const DIR_UPLOADS = './uploads/';
 const DIR_UPLOADED = './uploaded/';
@@ -260,7 +277,7 @@ module.exports = {
                             .catch(error => {
                                 console.log(error);
                                 res.status(500).send(error);
-                            });;
+                            });
                     } catch (error) {
                         console.log(error);
                         res.status(500).send(error);
@@ -285,6 +302,59 @@ module.exports = {
             .then(_total => {
                 // console.log('req.params.hash: ', req.params.hash);
                 // console.log('_total: ', _total);
+
+                flights.findAll({
+                    attributes: ['id', 'data', 'createdAt', 'updatedAt'],
+                    where: {
+                        data: null,
+                        is_archived: false,
+                        createdAt: {
+                            [Op.lt]: moment().subtract(15, 'minutes').toDate(),
+                        }
+                      }
+                }).then(results => {
+                    if(!results) {
+                        console.log('no flights found');    
+                    }
+
+                    for (let entry of results) {
+                        console.log(JSON.stringify(entry));
+                    }
+
+                    flights.update({
+                        data: {"status": 6},
+                        updatedAt: moment().toDate(),
+                      }, {
+                        where: {
+                            data: null,
+                            is_archived: false,
+                            createdAt: {
+                                [Op.lt]: moment().subtract(15, 'minutes').toDate(),
+                            }
+                        }
+                      })
+                    .then(flights => {
+                        console.log('no flights found');    
+                    })
+                    .catch(error => {
+                        console.log('no flights found');    
+                    });
+                    // sendMailer.mailer.send('email', {
+                    //     to: 'saeed.ahmed@altran.com', // REQUIRED. This can be a comma delimited string just like a normal email to field. 
+                    //     subject: 'There is some problems in the data processing', // REQUIRED.
+                    //     otherProperty: 'Other Property' // All additional properties are also passed to the template as local variables.
+                    //   }, function (err) {
+                    //     if (err) {
+                    //       // handle error
+                    //       console.log(err);
+                    //       res.send('There was an error sending the email');
+                    //       return;
+                    //     }
+                    //     console.log('Email Sent');
+                    //   });
+                }).catch(error => {
+                    console.log(error);
+                });
 
                 res.status(200)
                     .send({
@@ -354,5 +424,5 @@ module.exports = {
             console.log(error);
             res.status(500).send(error);
         });
-    }
+    },
 };
