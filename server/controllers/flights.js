@@ -93,7 +93,6 @@ module.exports = {
     /* page reload lost the upload history and upload file*/
     fileupload(req, res) {
         upload(req, res, function(err) {
-            console.log('drone:', JSON.parse(req.body.data).uavid);
             if (err) {
                 // An error occurred when uploading
                 // console.log('err: ', err);
@@ -104,7 +103,6 @@ module.exports = {
             var _create_final_file = function(req, res, flights) {
                 let _destination_dir = DIR_UPLOADED;
                 try {
-                    // console.log('req.params: ', req.params);
                     if (!_supported) {
                         _destination_dir += '/unsupported/';
                     }
@@ -162,6 +160,7 @@ module.exports = {
                         .create({
                             metadata: _metadata,
                             uav_id: JSON.parse(req.body.data).uavid,
+                            user_id: JSON.parse(req.body.data.user_id),
                             /*
                              * we are saving duplicate of this file name on metadata and filename column
                              * for changing the database structure json to relational.
