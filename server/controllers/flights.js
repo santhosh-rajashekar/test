@@ -3,13 +3,30 @@
 const flights = require('../models').flights;
 const datauavs = require('../models').datauavs;
 
+const express = require('express');
+const mailer = require('express-mailer');
 const multer = require('multer');
 const fs = require('fs');
 const path = require("path");
+const moment = require('moment');
 var _ = require('lodash');
 const Sequelize = require('sequelize');
 
 const Op = Sequelize.Op;
+const app = express();
+app.set('views', __dirname + '/../views');
+app.set('view engine', 'jade');
+const sendMailer = mailer.extend(app, {
+    from: 'hcm-admin@safe-drone.com',
+    host: 'smtp.safe-drone.com', // hostname
+    secureConnection: false, // use SSL
+    port: 587, // port for secure SMTP
+    transportMethod: 'SMTP', // default is SMTP. Accepts anything that nodemailer accepts
+    auth: {
+        user: 'hcm-admin@safe-drone.com',
+        pass: 'hcm0nlyc@nsend'
+    }
+});
 
 const DIR_UPLOADS = './uploads/';
 const DIR_UPLOADED = './uploaded/';
@@ -76,7 +93,6 @@ module.exports = {
     /* page reload lost the upload history and upload file*/
     fileupload(req, res) {
         upload(req, res, function(err) {
-            console.log('drone:', JSON.parse(req.body.data).uavid);
             if (err) {
                 // An error occurred when uploading
                 // console.log('err: ', err);
@@ -87,7 +103,6 @@ module.exports = {
             var _create_final_file = function(req, res, flights) {
                 let _destination_dir = DIR_UPLOADED;
                 try {
-                    // console.log('req.params: ', req.params);
                     if (!_supported) {
                         _destination_dir += '/unsupported/';
                     }
@@ -129,9 +144,9 @@ module.exports = {
                     let _metadata = datauavs.data;
                     _metadata.upload_date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
                     /*
-                    * we are saving duplicate of this file name on metadata and filename column
-                    * for changing the database structure json to relational.
-                    */
+                     * we are saving duplicate of this file name on metadata and filename column
+                     * for changing the database structure json to relational.
+                     */
                     _metadata.upload_filename = req.file.originalname;
 
                     if ([true, 'true'].indexOf(JSON.parse(req.body.data).supportedDrone) >= 0) {
@@ -145,10 +160,11 @@ module.exports = {
                         .create({
                             metadata: _metadata,
                             uav_id: JSON.parse(req.body.data).uavid,
+                            user_id: JSON.parse(req.body.data).user_id,
                             /*
-                            * we are saving duplicate of this file name on metadata and filename column
-                            * for changing the database structure json to relational.
-                            */
+                             * we are saving duplicate of this file name on metadata and filename column
+                             * for changing the database structure json to relational.
+                             */
                             filename: _metadata.upload_filename,
                             file_md5_hash: JSON.parse(req.body.data).md5hash
                         })
@@ -213,7 +229,8 @@ module.exports = {
                         where: {
                             id: {
                                 [Op.in]: ids
-                            }
+                            },
+                            is_archived: false
                         },
                         group: [
                             [Sequelize.json("data.status")]
@@ -238,6 +255,8 @@ module.exports = {
             let _checked = req.body.checked;
             let _checked_note = req.body.checked_note;
             let _uploadedFileName = req.body.uploadedFileName;
+            let _user_id = req.body.user_id;
+            let _timestamp = req.body.timestamp;
 
             return flights.findById(_flight_id)
                 .then(flight => {
@@ -247,9 +266,11 @@ module.exports = {
                             return;
                         }
 
+                        flight.data.result.flight_component[_component].user_id = _user_id;
                         flight.data.result.flight_component[_component].checked = _checked;
                         flight.data.result.flight_component[_component].checked_note = _checked_note;
                         flight.data.result.flight_component[_component].uploadedFileName = _uploadedFileName;
+                        flight.data.result.flight_component[_component].timestamp = _timestamp;
 
                         return flight.update({
                                 data: flight.data
@@ -260,7 +281,7 @@ module.exports = {
                             .catch(error => {
                                 console.log(error);
                                 res.status(500).send(error);
-                            });;
+                            });
                     } catch (error) {
                         console.log(error);
                         res.status(500).send(error);
@@ -285,6 +306,61 @@ module.exports = {
             .then(_total => {
                 // console.log('req.params.hash: ', req.params.hash);
                 // console.log('_total: ', _total);
+
+                flights.findAll({
+                    attributes: ['id', 'data', 'createdAt', 'updatedAt'],
+                    where: {
+                        data: null,
+                        is_archived: false,
+                        createdAt: {
+                            [Op.lt]: moment().subtract(15, 'minutes').toDate(),
+                        }
+                    }
+                }).then(results => {
+                    if (!results) {
+                        console.log('no flights found');
+                    }
+
+                    for (let entry of results) {
+                        console.log(JSON.stringify(entry));
+                    }
+
+                    flights.update({
+                            data: { "status": 6 },
+                            updatedAt: moment().toDate(),
+                        }, {
+                            where: {
+                                data: null,
+                                is_archived: false,
+                                createdAt: {
+                                    [Op.lt]: moment().subtract(30, 'minutes').toDate(),
+                                }
+                            }
+                        })
+                        .then(flights => {
+                            console.log('no flights found');
+                        })
+                        .catch(error => {
+                            console.log('no flights found');
+                        });
+                        if (process.env.NODE_ENV == 'production') {
+                            sendMailer.mailer.send('email', {
+                                to: 'philipp.koehler@lht.dlh.de', // REQUIRED. This can be a comma delimited string just like a normal email to field. 
+                                subject: 'There is some problems in the data processing', // REQUIRED.
+                                otherProperty: 'Other Property' // All additional properties are also passed to the template as local variables.
+                              }, function (err) {
+                                if (err) {
+                                  // handle error
+                                  console.log(err);
+                                  res.send('There was an error sending the email');
+                                  return;
+                                }
+                                console.log('Email Sent');
+                              });
+                        }
+                }).catch(error => {
+                    console.log(error);
+                });
 
                 res.status(200)
                     .send({
@@ -329,30 +405,30 @@ module.exports = {
             });
     },
 
-    isDuplicateFile (req, res) {
+    isDuplicateFile(req, res) {
         return flights.count({
-            where: {
-                uav_id: req.params.id,
-                file_md5_hash: req.body.md5hash,
-                is_archived: false
-            }
-        }) 
-        .then(flights => {
-            
-            console.log(flights);
-            if(flights > 0) {
-                return res.status(200).send({
-                    isDuplicate: true
-                });
-            } else {
-                return res.status(200).send({
-                    isDuplicate: false
-                });
-            }
+                where: {
+                    uav_id: req.params.id,
+                    file_md5_hash: req.body.md5hash,
+                    is_archived: false
+                }
+            })
+            .then(flights => {
 
-        }).catch(error => {
-            console.log(error);
-            res.status(500).send(error);
-        });
-    }
+                console.log(flights);
+                if (flights > 0) {
+                    return res.status(200).send({
+                        isDuplicate: true
+                    });
+                } else {
+                    return res.status(200).send({
+                        isDuplicate: false
+                    });
+                }
+
+            }).catch(error => {
+                console.log(error);
+                res.status(500).send(error);
+            });
+    },
 };

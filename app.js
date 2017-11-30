@@ -1,4 +1,5 @@
 const express = require('express');
+const mailer = require('express-mailer');
 const logger = require('morgan');
 const bodyParser = require('body-parser');
 const debug = require('debug')('expressdebug:server');

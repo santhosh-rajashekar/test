@@ -7,5 +7,5 @@ module.exports = {
   flights,
   uav,
   uavhistories,
-  partnumber,
+  partnumber
 };
