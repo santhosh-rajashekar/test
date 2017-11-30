@@ -160,7 +160,7 @@ module.exports = {
                         .create({
                             metadata: _metadata,
                             uav_id: JSON.parse(req.body.data).uavid,
-                            user_id: JSON.parse(req.body.data.user_id),
+                            user_id: JSON.parse(req.body.data).user_id,
                             /*
                              * we are saving duplicate of this file name on metadata and filename column
                              * for changing the database structure json to relational.
