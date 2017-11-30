@@ -229,7 +229,8 @@ module.exports = {
                         where: {
                             id: {
                                 [Op.in]: ids
-                            }
+                            },
+                            is_archived: false
                         },
                         group: [
                             [Sequelize.json("data.status")]
@@ -332,7 +333,7 @@ module.exports = {
                                 data: null,
                                 is_archived: false,
                                 createdAt: {
-                                    [Op.lt]: moment().subtract(15, 'minutes').toDate(),
+                                    [Op.lt]: moment().subtract(30, 'minutes').toDate(),
                                 }
                             }
                         })
@@ -342,19 +343,21 @@ module.exports = {
                         .catch(error => {
                             console.log('no flights found');
                         });
-                    // sendMailer.mailer.send('email', {
-                    //     to: 'saeed.ahmed@altran.com', // REQUIRED. This can be a comma delimited string just like a normal email to field. 
-                    //     subject: 'There is some problems in the data processing', // REQUIRED.
-                    //     otherProperty: 'Other Property' // All additional properties are also passed to the template as local variables.
-                    //   }, function (err) {
-                    //     if (err) {
-                    //       // handle error
-                    //       console.log(err);
-                    //       res.send('There was an error sending the email');
-                    //       return;
-                    //     }
-                    //     console.log('Email Sent');
-                    //   });
+                        if (process.env.NODE_ENV == 'production') {
+                            sendMailer.mailer.send('email', {
+                                to: 'philipp.koehler@lht.dlh.de', // REQUIRED. This can be a comma delimited string just like a normal email to field. 
+                                subject: 'There is some problems in the data processing', // REQUIRED.
+                                otherProperty: 'Other Property' // All additional properties are also passed to the template as local variables.
+                              }, function (err) {
+                                if (err) {
+                                  // handle error
+                                  console.log(err);
+                                  res.send('There was an error sending the email');
+                                  return;
+                                }
+                                console.log('Email Sent');
+                              });
+                        }
                 }).catch(error => {
                     console.log(error);
                 });
