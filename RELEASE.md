@@ -1,4 +1,4 @@
-1.2.0.RC1
+1.2.0.rc2
 055bd36 (HEAD -> release/1.2.0.RC1, origin/dev, dev) Merge branch 'dev' of https://git.altran.de/luft
 hansa/backend into dev
 94baf62 * Modified: part_numbers seeder, please run first db:seed:undo:all and then db:seed:all
