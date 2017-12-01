@@ -209,7 +209,8 @@ module.exports = {
                 where: {
                     uav_id: {
                         [Op.in]: req.body.ids
-                    }
+                    },
+                    is_archived: false
                 },
                 group: [
                     [Sequelize.col("uav_id")]
@@ -300,7 +301,8 @@ module.exports = {
     checkFlightsChanges(req, res) {
         return flights.count({
                 where: {
-                    data: null
+                    data: null,
+                    is_archived: false
                 }
             })
             .then(_total => {
