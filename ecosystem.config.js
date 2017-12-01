@@ -33,7 +33,7 @@ module.exports = {
       ref  : 'origin/master',
       repo : 'https://saahmed:Altran2017!@git.altran.de/lufthansa/backend.git',
       path : '/home/lhtdev/hcm/backend',
-      'post-deploy' : 'npm install; cp /home/lhtdev/secretconfig/ecosystem.config.js ./ecosystem.config.js; sequelize db:migrate --env test; ln -sf /data/hcm uploaded; ln -sf /data/hcm/temp uploads; pm2 startOrRestart ecosystem.config.js --update-env --env production'
+      'post-deploy' : 'npm install; cp /home/lhtdev/secretconfig/ecosystem.config.js ./ecosystem.config.js; sequelize db:migrate --env production; ln -sf /data/hcm uploaded; ln -sf /data/hcm/temp uploads; pm2 startOrRestart ecosystem.config.js --update-env --env production'
     },
     test : {
       user : 'lhtdev',
