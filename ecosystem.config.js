@@ -28,7 +28,7 @@ module.exports = {
    */
   deploy : {
     production : {
-      user : 'node',
+      user : 'lhtdev',
       host : 'hcm-prod-web-host1.westeurope.cloudapp.azure.com',
       ref  : 'origin/master',
       repo : 'https://saahmed:Altran2017!@git.altran.de/lufthansa/backend.git',
