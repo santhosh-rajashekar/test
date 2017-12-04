@@ -308,67 +308,74 @@ module.exports = {
             .then(_total => {
                 // console.log('req.params.hash: ', req.params.hash);
                 // console.log('_total: ', _total);
-
-                flights.findAll({
-                    attributes: ['id', 'data', 'createdAt', 'updatedAt'],
-                    where: {
-                        data: null,
-                        is_archived: false,
-                        createdAt: {
-                            [Op.lt]: moment().subtract(15, 'minutes').toDate(),
-                        }
-                    }
-                }).then(results => {
-                    if (!results) {
-                        console.log('no flights found');
-                    }
-
-                    for (let entry of results) {
-                        console.log(JSON.stringify(entry));
-                    }
-
-                    flights.update({
-                            data: { "status": 6 },
-                            updatedAt: moment().toDate(),
-                        }, {
-                            where: {
-                                data: null,
-                                is_archived: false,
-                                createdAt: {
-                                    [Op.lt]: moment().subtract(30, 'minutes').toDate(),
-                                }
+                if (_total > 0 ) {
+                    flights.findAll({
+                        attributes: ['id', 'data', 'createdAt', 'updatedAt'],
+                        where: {
+                            data: null,
+                            is_archived: false,
+                            createdAt: {
+                                [Op.lt]: moment().subtract(15, 'minutes').toDate(),
                             }
-                        })
-                        .then(flights => {
-                            console.log('no flights found');
-                        })
-                        .catch(error => {
-                            console.log('no flights found');
-                        });
-                        if (process.env.NODE_ENV == 'production') {
-                            sendMailer.mailer.send('email', {
-                                to: 'philipp.koehler@lht.dlh.de', // REQUIRED. This can be a comma delimited string just like a normal email to field. 
-                                subject: 'There is some problems in the data processing', // REQUIRED.
-                                otherProperty: 'Other Property' // All additional properties are also passed to the template as local variables.
-                              }, function (err) {
-                                if (err) {
-                                  // handle error
-                                  console.log(err);
-                                  res.send('There was an error sending the email');
-                                  return;
-                                }
-                                console.log('Email Sent');
-                              });
                         }
-                }).catch(error => {
-                    console.log(error);
-                });
-
-                res.status(200)
-                    .send({
-                        c: ((+req.params.hash >= 0 && +req.params.hash !== _total) ? 1 : 0),
-                        h: _total
+                    }).then(results => {
+                        if (!results) {
+                            console.log('no flights found');
+                        }
+    
+                        flights.update({
+                                data: { "status": 6 },
+                                updatedAt: moment().toDate(),
+                            }, {
+                                where: {
+                                    data: null,
+                                    is_archived: false,
+                                    createdAt: {
+                                        [Op.lt]: moment().subtract(30, 'minutes').toDate(),
+                                    }
+                                }
+                            })
+                            .then(flights => {
+                                if (process.env.NODE_ENV == 'production') {
+                                    sendMailer.mailer.send('email', {
+                                        to: 'philipp.koehler@lht.dlh.de', // REQUIRED. This can be a comma delimited string just like a normal email to field. 
+                                        subject: 'There is some problems in the data processing', // REQUIRED.
+                                        otherProperty: 'Other Property' // All additional properties are also passed to the template as local variables.
+                                        }, function (err) {
+                                        if (err) {
+                                            // handle error
+                                            console.log(err);
+                                            res.send('There was an error sending the email');
+                                            return;
+                                        }
+                                        console.log('Email Sent');
+                                        });
+                                }
+    
+                                req.params.hash++;
+                                _total = req.params.hash + 1;
+    
+                                console.log('status updated');
+                            })
+                            .catch(error => {
+                                console.log(error);
+                            });
+                    }).catch(error => {
+                        console.log(error);
                     });
+    
+                    res.status(200)
+                        .send({
+                            c: ((+req.params.hash >= 0 && +req.params.hash !== _total) ? 1 : 0),
+                            h: _total
+                        });
+                } else {
+                    res.status(200)
+                    .send({
+                        c: 0,
+                        h: 0
+                    });
+                }
             })
             .catch(error => {
                 console.log(error);
