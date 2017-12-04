@@ -470,7 +470,7 @@ module.exports = {
             console.log(JSON.stringify(flights));
             res.status(200)
             .send({
-                
+                "filenames" : JSON.stringify(flights)
             });
         }).catch(error => {
             console.log(error);
