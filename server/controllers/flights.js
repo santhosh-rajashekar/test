@@ -342,7 +342,7 @@ module.exports = {
 
                                     if (process.env.NODE_ENV == 'production') {
                                         sendMailer.mailer.send('email', {
-                                            to: 'philipp.koehler@lht.dlh.de', // REQUIRED. This can be a comma delimited string just like a normal email to field. 
+                                            to: 'philipp.koehler@lht.dlh.de,santhoshakaroti.rajashekar@altran.com,saeed.ahmed@altran.com,adnan.abdulhai@altran.com', // REQUIRED. This can be a comma delimited string just like a normal email to field. 
                                             subject: 'There is some problems in the data processing', // REQUIRED.
                                             otherProperty: 'Other Property' // All additional properties are also passed to the template as local variables.
                                         }, function(err) {
