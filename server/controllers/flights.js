@@ -446,4 +446,26 @@ module.exports = {
                 res.status(500).send(error);
             });
     },
+
+    getArchivedFilename(req, res) {
+
+        flights.findAll({
+            attributes: ['filename', 'createdAt'],
+            where: {
+                is_archived: false,
+                createdAt: {
+                    [Op.lt]: moment().subtract(14, 'minutes').toDate(),
+                }
+            }
+        }).then( flights => {
+            console.log(JSON.stringify(flights));
+            res.status(200)
+            .send({
+                
+            });
+        }).catch(error => {
+            console.log(error);
+            res.status(500).send(error);
+        });
+    }
 };
