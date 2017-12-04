@@ -315,7 +315,7 @@ module.exports = {
                             data: null,
                             is_archived: false,
                             createdAt: {
-                                [Op.lt]: moment().subtract(15, 'minutes').toDate(),
+                                [Op.lt]: moment().subtract(5, 'minutes').toDate(),
                             }
                         }
                     }).then(results => {
@@ -332,7 +332,7 @@ module.exports = {
                                     data: null,
                                     is_archived: false,
                                     createdAt: {
-                                        [Op.lt]: moment().subtract(30, 'minutes').toDate(),
+                                        [Op.lt]: moment().subtract(5, 'minutes').toDate(),
                                     }
                                 }
                             })
@@ -350,21 +350,21 @@ module.exports = {
                                             if (err) {
                                                 // handle error
                                                 console.log(err);
-                                                //res.send('There was an error sending the email');
+                                                console.log('There was an error sending the email');
+                                                // res.send('There was an error sending the email');
                                                 // return;
                                             }
-
-                                            req.params.hash++;
-                                            _total = req.params.hash + 1;
-                                            res.status(200)
-                                                .send({
-                                                    c: ((+req.params.hash >= 0 && +req.params.hash !== _total) ? 1 : 0),
-                                                    h: _total
-                                                });
-
                                             console.log('Email Sent');
                                         });
                                     }
+
+                                    req.params.hash++;
+                                    _total = req.params.hash + 1;
+                                    res.status(200)
+                                        .send({
+                                            c: ((+req.params.hash >= 0 && +req.params.hash !== _total) ? 1 : 0),
+                                            h: _total
+                                        });
 
                                     console.log('status updated');
                                 }
