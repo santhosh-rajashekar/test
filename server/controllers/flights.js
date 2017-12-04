@@ -308,7 +308,7 @@ module.exports = {
             .then(_total => {
                 // console.log('req.params.hash: ', req.params.hash);
                 // console.log('_total: ', _total);
-                if (_total > 0 ) {
+                if (_total > 0) {
                     flights.findAll({
                         attributes: ['id', 'data', 'createdAt', 'updatedAt'],
                         where: {
@@ -321,8 +321,9 @@ module.exports = {
                     }).then(results => {
                         if (!results) {
                             console.log('no flights found');
+                            return;
                         }
-    
+
                         flights.update({
                                 data: { "status": 6 },
                                 updatedAt: moment().toDate(),
@@ -336,26 +337,37 @@ module.exports = {
                                 }
                             })
                             .then(flights => {
-                                if (process.env.NODE_ENV == 'production') {
-                                    sendMailer.mailer.send('email', {
-                                        to: 'philipp.koehler@lht.dlh.de', // REQUIRED. This can be a comma delimited string just like a normal email to field. 
-                                        subject: 'There is some problems in the data processing', // REQUIRED.
-                                        otherProperty: 'Other Property' // All additional properties are also passed to the template as local variables.
-                                        }, function (err) {
-                                        if (err) {
-                                            // handle error
-                                            console.log(err);
-                                            res.send('There was an error sending the email');
-                                            return;
-                                        }
-                                        console.log('Email Sent');
+
+                                if (flights) {
+
+                                    if (process.env.NODE_ENV == 'production') {
+                                        sendMailer.mailer.send('email', {
+                                            to: 'philipp.koehler@lht.dlh.de', // REQUIRED. This can be a comma delimited string just like a normal email to field. 
+                                            subject: 'There is some problems in the data processing', // REQUIRED.
+                                            otherProperty: 'Other Property' // All additional properties are also passed to the template as local variables.
+                                        }, function(err) {
+
+                                            if (err) {
+                                                // handle error
+                                                console.log(err);
+                                                //res.send('There was an error sending the email');
+                                                // return;
+                                            }
+
+                                            req.params.hash++;
+                                            _total = req.params.hash + 1;
+                                            res.status(200)
+                                                .send({
+                                                    c: ((+req.params.hash >= 0 && +req.params.hash !== _total) ? 1 : 0),
+                                                    h: _total
+                                                });
+
+                                            console.log('Email Sent');
                                         });
+                                    }
+
+                                    console.log('status updated');
                                 }
-    
-                                req.params.hash++;
-                                _total = req.params.hash + 1;
-    
-                                console.log('status updated');
                             })
                             .catch(error => {
                                 console.log(error);
@@ -363,18 +375,12 @@ module.exports = {
                     }).catch(error => {
                         console.log(error);
                     });
-    
-                    res.status(200)
-                        .send({
-                            c: ((+req.params.hash >= 0 && +req.params.hash !== _total) ? 1 : 0),
-                            h: _total
-                        });
                 } else {
                     res.status(200)
-                    .send({
-                        c: 0,
-                        h: 0
-                    });
+                        .send({
+                            c: 0,
+                            h: 0
+                        });
                 }
             })
             .catch(error => {
