@@ -470,7 +470,7 @@ module.exports = {
             console.log(JSON.stringify(flights));
             res.status(200)
             .send({
-                "filenames" : JSON.stringify(flights)
+                "filenames":"[{\"filename\":\"datafile_1.bin\",\"createdAt\":\"2017-11-01T16:12:33.626Z\"},{\"filename\":\"datafile_10.bin\",\"createdAt\":\"2017-11-01T17:14:25.289Z\"},{\"filename\":\"datafile_11.bin\",\"createdAt\":\"2017-11-01T16:07:17.273Z\"}]"
             });
         }).catch(error => {
             console.log(error);
