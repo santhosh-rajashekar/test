@@ -100,24 +100,14 @@ module.exports = {
             }
 
             var _supported = [true, 'true'].indexOf(JSON.parse(req.body.data).supportedDrone) >= 0;
-            var _create_final_file = function(req, res, flights) {
+
+            var _create_final_file = function(req, res, flights, _destination_filename) {
                 let _destination_dir = DIR_UPLOADED;
                 try {
                     if (!_supported) {
                         _destination_dir += '/unsupported/';
                     }
-
-                    let _destination_filename = [
-                        'datafile',
-                        JSON.parse(req.body.data).manufacturer,
-                        JSON.parse(req.body.data).model,
-                        _supported ? flights.id : (new Date().getTime()).toString()
-                    ].join('_') + path.extname(req.file.filename);
-
-                    _destination_filename = _destination_filename.toLowerCase();
-
                     console.log("\n\n _destination_filename:", _destination_filename);
-
                     fs.renameSync(DIR_UPLOADS + req.file.filename, _destination_dir + _destination_filename);
                     fs.accessSync(_destination_dir + _destination_filename, fs.constants.R_OK | fs.constants.W_OK);
 
@@ -128,7 +118,17 @@ module.exports = {
             };
 
             if (!_supported) {
-                _create_final_file(req, res, { id: 0 });
+
+                let _destination_filename = [
+                    'datafile',
+                    JSON.parse(req.body.data).manufacturer,
+                    JSON.parse(req.body.data).model,
+                    _supported ? flights.id : (new Date().getTime()).toString()
+                ].join('_') + path.extname(req.file.filename);
+
+                _destination_filename = _destination_filename.toLowerCase();
+
+                _create_final_file(req, res, { id: 0 }, _destination_filename);
                 return;
             }
 
@@ -156,6 +156,15 @@ module.exports = {
                         };
                     }
 
+                    let _destination_filename = [
+                        'datafile',
+                        JSON.parse(req.body.data).manufacturer,
+                        JSON.parse(req.body.data).model,
+                        _supported ? flights.id : (new Date().getTime()).toString()
+                    ].join('_') + path.extname(req.file.filename);
+
+                    _destination_filename = _destination_filename.toLowerCase();
+
                     return flights
                         .create({
                             metadata: _metadata,
@@ -165,11 +174,11 @@ module.exports = {
                              * we are saving duplicate of this file name on metadata and filename column
                              * for changing the database structure json to relational.
                              */
-                            filename: _metadata.upload_filename,
+                            filename: _destination_filename,
                             file_md5_hash: JSON.parse(req.body.data).md5hash
                         })
                         .then(flights => {
-                            _create_final_file(req, res, flights);
+                            _create_final_file(req, res, flights, _destination_filename);
                         })
                         .catch(error => {
                             console.log(error);
@@ -342,7 +351,7 @@ module.exports = {
 
                                     if (process.env.NODE_ENV == 'production') {
                                         sendMailer.mailer.send('email', {
-                                            to: 'philipp.koehler@lht.dlh.de', // REQUIRED. This can be a comma delimited string just like a normal email to field. 
+                                            to: 'philipp.koehler@lht.dlh.de,santhoshakaroti.rajashekar@altran.com,saeed.ahmed@altran.com,adnan.abdulhai@altran.com', // REQUIRED. This can be a comma delimited string just like a normal email to field. 
                                             subject: 'There is some problems in the data processing', // REQUIRED.
                                             otherProperty: 'Other Property' // All additional properties are also passed to the template as local variables.
                                         }, function(err) {
