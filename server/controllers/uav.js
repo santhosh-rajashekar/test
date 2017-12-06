@@ -79,7 +79,7 @@ module.exports = {
 
                         if (_last_flight.createdAt) {
                             _last_update = _last_flight.createdAt;
-                            _last_update = _last_update.toISOString().replace(/T/, ' ').replace(/\..+/, '');
+                            //_last_update = _last_update.toISOString().replace(/T/, ' ').replace(/\..+/, '');
                         }
                     }
 
