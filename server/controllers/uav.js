@@ -65,7 +65,7 @@ module.exports = {
 
                 const resObj = datauavs.map(datauav => {
                     let _last_status = 31;
-                    let _last_update = '--';
+                    let _last_update = null;
                     let _uploaded_flights = 0;
 
                     if (datauav.flights.length) {
