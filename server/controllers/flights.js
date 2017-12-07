@@ -461,17 +461,34 @@ module.exports = {
         flights.findAll({
             attributes: ['filename', 'createdAt'],
             where: {
-                is_archived: false,
+                is_archived: true,
                 createdAt: {
-                    [Op.lt]: moment().subtract(14, 'minutes').toDate(),
+                    [Op.lt]: moment().subtract(30, 'days').toDate(),
                 }
             }
         }).then( flights => {
             console.log(JSON.stringify(flights));
             res.status(200)
             .send({
-                "filenames":"[{\"filename\":\"datafile_1.bin\",\"createdAt\":\"2017-11-01T16:12:33.626Z\"},{\"filename\":\"datafile_10.bin\",\"createdAt\":\"2017-11-01T17:14:25.289Z\"},{\"filename\":\"datafile_11.bin\",\"createdAt\":\"2017-11-01T16:07:17.273Z\"}]"
+                "filenames": JSON.stringify(flights)
             });
+        }).catch(error => {
+            console.log(error);
+            res.status(500).send(error);
+        });
+    },
+
+    deleteArchivedFlights(req, res) {
+
+        flights.destroy({
+            where: {
+                is_archived: true,
+                createdAt: {
+                    [Op.lt]: moment().subtract(30, 'days').toDate(),
+                }
+            }
+        }).then( flights => {
+            res.status(200).send('deleted successfully');
         }).catch(error => {
             console.log(error);
             res.status(500).send(error);
