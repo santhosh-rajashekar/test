@@ -79,7 +79,6 @@ module.exports = {
 
                         if (_last_flight.createdAt) {
                             _last_update = _last_flight.createdAt;
-                            //_last_update = _last_update.toISOString().replace(/T/, ' ').replace(/\..+/, '');
                         }
                     }
 
@@ -178,18 +177,6 @@ module.exports = {
             }
         });
     },
-
-    // delete(req, res) {
-    //     return datauavs.destroy({
-    //             where: {
-    //                 id: req.params.id
-    //             }
-    //         })
-    //         .then(() => res.status(200).send('Deleted'))
-    //         .catch(error => {
-    //             res.status(500).send(error)
-    //         });
-    // },
 
     delete(req, res) {
         return datauavs.findById(req.params.id)
