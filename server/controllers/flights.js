@@ -157,15 +157,6 @@ module.exports = {
                         };
                     }
 
-                    let _destination_filename = [
-                        'datafile',
-                        JSON.parse(req.body.data).manufacturer,
-                        JSON.parse(req.body.data).model,
-                        _supported ? flights.id : (new Date().getTime()).toString()
-                    ].join('_') + path.extname(req.file.filename);
-
-                    _destination_filename = _destination_filename.toLowerCase();
-
                     return flights
                         .create({
                             metadata: _metadata,
@@ -175,20 +166,41 @@ module.exports = {
                              * we are saving duplicate of this file name on metadata and filename column
                              * for changing the database structure json to relational.
                              */
-                            filename: _destination_filename,
+                            filename: '',
                             file_md5_hash: JSON.parse(req.body.data).md5hash
                         })
                         .then(flights => {
-                            _create_final_file(req, res, flights, _destination_filename);
 
-                            archived_flights.create({
-                                uav_id: JSON.parse(req.body.data).uavid
-                            }).then(archived_flights => {
-                                console.log('entry created successfully in archived_flights table');
-                            }).catch(error => {
-                                console.log(error);
-                                console.log('error in creating row in the archived_flights table');
-                            });
+                            let _destination_filename = [
+                                'datafile',
+                                JSON.parse(req.body.data).manufacturer,
+                                JSON.parse(req.body.data).model,
+                                _supported ? flights.id : (new Date().getTime()).toString()
+                            ].join('_') + path.extname(req.file.filename);
+
+                            _destination_filename = _destination_filename.toLowerCase();
+
+                            flights.update({
+                                    filename: _destination_filename
+                                })
+                                .then(flight => {
+                                    console.log('destination filename updated successfully');
+
+                                    _create_final_file(req, res, flights, _destination_filename);
+
+                                    archived_flights.create({
+                                        uav_id: JSON.parse(req.body.data).uavid
+                                    }).then(archived_flights => {
+                                        console.log('entry created successfully in archived_flights table');
+                                    }).catch(error => {
+                                        console.log(error);
+                                        console.log('error in creating row in the archived_flights table');
+                                    });
+                                })
+                                .catch(error => {
+                                    console.log(error);
+                                    console.log('Error in updating the destination filename');
+                                });
                         })
                         .catch(error => {
                             console.log(error);
@@ -337,7 +349,7 @@ module.exports = {
 
                     //moment() is not behaving consistently
                     //TODO : to be verified, hence switching default javascript to get the local time on server
-                    var createdTime = moment().subtract(2, 'minutes').toDate();
+                    var createdTime = moment().subtract(60, 'minutes').toDate();
 
                     flights.findAll({
                             attributes: ['id', 'data', 'filename', 'createdAt', 'updatedAt'],
@@ -383,7 +395,7 @@ module.exports = {
                                     toList = 'santhoshakaroti.rajashekar@altran.com';
                                 }
 
-                                if (process.env.NODE_ENV == 'production' || process.env.NODE_ENV == 'test') {	
+                                if (process.env.NODE_ENV == 'production' || process.env.NODE_ENV == 'test') {
                                     sendMailer.mailer.send('email', {
                                         to: toList,
                                         subject: 'There is some problems in the data processing',
@@ -488,6 +500,51 @@ module.exports = {
                 .send({
                     "filenames": JSON.stringify(flights)
                 });
+        }).catch(error => {
+            console.log(error);
+            res.status(500).send(error);
+        });
+    },
+
+    getArchivedFileDetails(req, res) {
+
+        var date = moment().subtract(30, 'days').toDate();
+        console.log(date);
+
+        function archived_file(filename, flight_id, uav_id, manufacturer_name, manufacturer_model) {
+            this.filename = filename;
+            this.flight_id = flight_id;
+            this.uav_id = uav_id;
+            this.manufacturer_name = manufacturer_name;
+            this.manufacturer_model = manufacturer_model;
+        }
+
+        flights.findAll({
+            where: {
+                is_archived: true,
+                updatedAt: {
+                    [Op.lt]: date,
+                }
+            }
+        }).then(flights => {
+
+            console.log(flights);
+            var archivedFileDetails = [];
+
+            for (var i = 0; i < flights.length; i++) {
+
+                var file_details = new archived_file();
+                file_details.filename = flights[i].filename;
+                file_details.flight_id = flights[i].id;
+                file_details.uav_id = flights[i].uav_id;
+                file_details.manufacturer_name = flights[i].metadata.manufacturer_name;
+                file_details.manufacturer_model = flights[i].metadata.manufacturer_model;
+
+                archivedFileDetails.push(file_details);
+            }
+
+            res.status(200)
+                .send(JSON.stringify(archivedFileDetails));
         }).catch(error => {
             console.log(error);
             res.status(500).send(error);
