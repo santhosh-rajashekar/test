@@ -11,6 +11,8 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
+app.use(express.static('docs'))
+
 app.use(function(req, res, next) {
     res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS,GET,PUT,HEAD,DELETE');
     res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
