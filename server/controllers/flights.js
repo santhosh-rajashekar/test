@@ -505,7 +505,7 @@ module.exports = {
 
     getArchivedFileDetails(req, res) {
 
-        var date = moment().subtract(30, 'days').toDate();
+        var date = moment().subtract(2, 'minutes').toDate();
         console.log(date);
 
         function archived_file(filename, flight_id, uav_id, manufacturer_name, manufacturer_model) {
@@ -554,7 +554,7 @@ module.exports = {
             where: {
                 is_archived: true,
                 updatedAt: {
-                    [Op.lt]: moment().subtract(30, 'days').toDate(),
+                    [Op.lt]: moment().subtract(2, 'minutes').toDate(),
                 }
             }
         }).then(flights => {
@@ -572,7 +572,7 @@ module.exports = {
             where: {
                 is_archived: true,
                 createdAt: {
-                    [Op.lt]: moment().subtract(30, 'days').toDate(),
+                    [Op.lt]: moment().subtract(2, 'minutes').toDate(),
                 }
             }
         }).then( flights => {
