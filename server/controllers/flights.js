@@ -362,8 +362,6 @@ module.exports = {
                         })
                         .then(flights => {
 
-                            console.log('check before sending email results : ');
-
                             if (flights && flights.length < 1) {
                                 console.log('No flight found');
                                 responseFn();
@@ -391,7 +389,7 @@ module.exports = {
                                 if (process.env.NODE_ENV == 'production') {
                                     toList = 'philipp.koehler@lht.dlh.de,santhoshakaroti.rajashekar@altran.com,saeed.ahmed@altran.com,adnan.abdulhai@altran.com';
                                 } else if (process.env.NODE_ENV == 'test') {
-                                    toList = 'santhoshakaroti.rajashekar@altran.com';
+                                    toList = 'santhoshakaroti.rajashekar@altran.com, saeed.ahmed@altran.com';
                                 }
 
                                 if (process.env.NODE_ENV == 'production' || process.env.NODE_ENV == 'test') {
