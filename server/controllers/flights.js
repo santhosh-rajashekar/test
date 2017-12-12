@@ -330,7 +330,6 @@ module.exports = {
     },
 
     checkFlightsChanges(req, res) {
-        console.log('checkFlightsChanges called');
         return flights.count({
                 where: {
                     data: null,
@@ -363,8 +362,6 @@ module.exports = {
                         })
                         .then(flights => {
 
-                            console.log('check before sending email results : ');
-
                             if (flights && flights.length < 1) {
                                 console.log('No flight found');
                                 responseFn();
@@ -392,7 +389,7 @@ module.exports = {
                                 if (process.env.NODE_ENV == 'production') {
                                     toList = 'philipp.koehler@lht.dlh.de,santhoshakaroti.rajashekar@altran.com,saeed.ahmed@altran.com,adnan.abdulhai@altran.com';
                                 } else if (process.env.NODE_ENV == 'test') {
-                                    toList = 'santhoshakaroti.rajashekar@altran.com';
+                                    toList = 'santhoshakaroti.rajashekar@altran.com, saeed.ahmed@altran.com';
                                 }
 
                                 if (process.env.NODE_ENV == 'production' || process.env.NODE_ENV == 'test') {
@@ -400,7 +397,7 @@ module.exports = {
                                         to: toList,
                                         subject: 'There is some problems in the data processing',
                                         pretty: true,
-                                        otherProperty: 'otherProperty'
+                                        otherProperty: message
                                     }, function(err) {
 
                                         if (err) {
@@ -508,7 +505,7 @@ module.exports = {
 
     getArchivedFileDetails(req, res) {
 
-        var date = moment().subtract(30, 'days').toDate();
+        var date = moment().subtract(2, 'minutes').toDate();
         console.log(date);
 
         function archived_file(filename, flight_id, uav_id, manufacturer_name, manufacturer_model) {
@@ -557,11 +554,28 @@ module.exports = {
             where: {
                 is_archived: true,
                 updatedAt: {
-                    [Op.lt]: moment().subtract(30, 'days').toDate(),
+                    [Op.lt]: moment().subtract(2, 'minutes').toDate(),
                 }
             }
         }).then(flights => {
             console.log(JSON.parse(flights));
+            res.status(200).send('deleted successfully');
+        }).catch(error => {
+            console.log(error);
+            res.status(500).send(error);
+        });
+    },
+
+    deleteArchivedFlights(req, res) {
+
+        flights.destroy({
+            where: {
+                is_archived: true,
+                createdAt: {
+                    [Op.lt]: moment().subtract(2, 'minutes').toDate(),
+                }
+            }
+        }).then( flights => {
             res.status(200).send('deleted successfully');
         }).catch(error => {
             console.log(error);
