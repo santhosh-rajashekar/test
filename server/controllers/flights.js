@@ -330,7 +330,6 @@ module.exports = {
     },
 
     checkFlightsChanges(req, res) {
-        console.log('checkFlightsChanges called');
         return flights.count({
                 where: {
                     data: null,
@@ -349,7 +348,7 @@ module.exports = {
 
                     //moment() is not behaving consistently
                     //TODO : to be verified, hence switching default javascript to get the local time on server
-                    var createdTime = moment().subtract(60, 'minutes').toDate();
+                    var createdTime = moment().subtract(2, 'minutes').toDate();
 
                     flights.findAll({
                             attributes: ['id', 'data', 'filename', 'createdAt', 'updatedAt'],
@@ -400,7 +399,7 @@ module.exports = {
                                         to: toList,
                                         subject: 'There is some problems in the data processing',
                                         pretty: true,
-                                        otherProperty: 'otherProperty'
+                                        otherProperty: message
                                     }, function(err) {
 
                                         if (err) {
