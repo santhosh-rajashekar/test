@@ -1,6 +1,7 @@
 'use strict';
 
 const flights = require('../models').flights;
+const archived_flights = require('../models').archived_flights;
 const datauavs = require('../models').datauavs;
 
 const express = require('express');
@@ -156,15 +157,6 @@ module.exports = {
                         };
                     }
 
-                    let _destination_filename = [
-                        'datafile',
-                        JSON.parse(req.body.data).manufacturer,
-                        JSON.parse(req.body.data).model,
-                        _supported ? flights.id : (new Date().getTime()).toString()
-                    ].join('_') + path.extname(req.file.filename);
-
-                    _destination_filename = _destination_filename.toLowerCase();
-
                     return flights
                         .create({
                             metadata: _metadata,
@@ -174,11 +166,41 @@ module.exports = {
                              * we are saving duplicate of this file name on metadata and filename column
                              * for changing the database structure json to relational.
                              */
-                            filename: _destination_filename,
+                            filename: '',
                             file_md5_hash: JSON.parse(req.body.data).md5hash
                         })
                         .then(flights => {
-                            _create_final_file(req, res, flights, _destination_filename);
+
+                            let _destination_filename = [
+                                'datafile',
+                                JSON.parse(req.body.data).manufacturer,
+                                JSON.parse(req.body.data).model,
+                                _supported ? flights.id : (new Date().getTime()).toString()
+                            ].join('_') + path.extname(req.file.filename);
+
+                            _destination_filename = _destination_filename.toLowerCase();
+
+                            flights.update({
+                                    filename: _destination_filename
+                                })
+                                .then(flight => {
+                                    console.log('destination filename updated successfully');
+
+                                    _create_final_file(req, res, flights, _destination_filename);
+
+                                    archived_flights.create({
+                                        uav_id: JSON.parse(req.body.data).uavid
+                                    }).then(archived_flights => {
+                                        console.log('entry created successfully in archived_flights table');
+                                    }).catch(error => {
+                                        console.log(error);
+                                        console.log('error in creating row in the archived_flights table');
+                                    });
+                                })
+                                .catch(error => {
+                                    console.log(error);
+                                    console.log('Error in updating the destination filename');
+                                });
                         })
                         .catch(error => {
                             console.log(error);
@@ -308,6 +330,7 @@ module.exports = {
     },
 
     checkFlightsChanges(req, res) {
+        console.log('checkFlightsChanges called');
         return flights.count({
                 where: {
                     data: null,
@@ -315,92 +338,94 @@ module.exports = {
                 }
             })
             .then(_total => {
-                // console.log('req.params.hash: ', req.params.hash);
-                // console.log('_total: ', _total);
-                if (_total > 0) {
-                    flights.findAll({
-                        attributes: ['id', 'data', 'createdAt', 'updatedAt'],
-                        where: {
-                            data: null,
-                            is_archived: false,
-                            createdAt: {
-                                [Op.lt]: moment().subtract(5, 'minutes').toDate(),
-                            }
-                        }
-                    }).then(results => {
-                        if (!results) {
-                            console.log('no flights found');
-                            return;
-                        }
-
-                        flights.update({
-                                data: { "status": 6 },
-                                updatedAt: moment().toDate(),
-                            }, {
-                                where: {
-                                    data: null,
-                                    is_archived: false,
-                                    createdAt: {
-                                        [Op.lt]: moment().subtract(5, 'minutes').toDate(),
-                                    }
-                                }
-                            })
-                            .then(flights => {
-
-                                if (flights) {
-
-                                    if (process.env.NODE_ENV == 'production') {
-                                        sendMailer.mailer.send('email', {
-                                            to: 'philipp.koehler@lht.dlh.de,santhoshakaroti.rajashekar@altran.com,saeed.ahmed@altran.com,adnan.abdulhai@altran.com', // REQUIRED. This can be a comma delimited string just like a normal email to field. 
-                                            subject: 'There is some problems in the data processing', // REQUIRED.
-                                            otherProperty: 'Other Property' // All additional properties are also passed to the template as local variables.
-                                        }, function(err) {
-
-                                            if (err) {
-                                                // handle error
-                                                console.log(err);
-                                                console.log('There was an error sending the email');
-                                                // res.send('There was an error sending the email');
-                                                // return;
-                                            }
-                                            console.log('Email Sent');
-                                        });
-                                    }
-
-                                    req.params.hash++;
-                                    _total = req.params.hash + 1;
-                                    res.status(200)
-                                        .send({
-                                            c: ((+req.params.hash >= 0 && +req.params.hash !== _total) ? 1 : 0),
-                                            h: _total
-                                        });
-
-                                    console.log('status updated');
-                                }
-                            })
-                            .catch(error => {
-                                console.log(error);
-                            });
-                    }).catch(error => {
-                        console.log(error);
+                var responseFn = function() {
+                    res.status(200).send({
+                        c: ((+req.params.hash >= 0 && +req.params.hash !== _total) ? 1 : 0),
+                        h: _total
                     });
-                } else {
-                    res.status(200)
-                        .send({
-                            c: 0,
-                            h: 0
+                };
+
+                if (_total > 0) {
+
+                    //moment() is not behaving consistently
+                    //TODO : to be verified, hence switching default javascript to get the local time on server
+                    var createdTime = moment().subtract(60, 'minutes').toDate();
+
+                    flights.findAll({
+                            attributes: ['id', 'data', 'filename', 'createdAt', 'updatedAt'],
+                            where: {
+                                data: null,
+                                is_archived: false,
+                                createdAt: {
+                                    [Op.lt]: createdTime,
+                                }
+                            }
+                        })
+                        .then(flights => {
+
+                            console.log('check before sending email results : ');
+
+                            if (flights && flights.length < 1) {
+                                console.log('No flight found');
+                                responseFn();
+                            } else {
+                                console.log(flights.length + ' flights found');
+
+                                var message = 'Flights with below details have not received any analyzed results within the expected time';
+                                message = message + '\n' + 'Filenames :';
+
+                                for (var i = 0; i < flights.length; i++) {
+                                    message = message + '\n' + flights[i].dataValues.filename;
+
+                                    flights[i].update({
+                                        data: { "status": 6 },
+                                        updatedAt: moment().toDate(),
+                                    }).catch(error => {
+                                        console.log(error);
+                                    });
+                                }
+
+                                console.log('Message for Email =');
+                                console.log(message);
+
+                                var toList;
+                                if (process.env.NODE_ENV == 'production') {
+                                    toList = 'philipp.koehler@lht.dlh.de,santhoshakaroti.rajashekar@altran.com,saeed.ahmed@altran.com,adnan.abdulhai@altran.com';
+                                } else if (process.env.NODE_ENV == 'test') {
+                                    toList = 'santhoshakaroti.rajashekar@altran.com';
+                                }
+
+                                if (process.env.NODE_ENV == 'production' || process.env.NODE_ENV == 'test') {
+                                    sendMailer.mailer.send('email', {
+                                        to: toList,
+                                        subject: 'There is some problems in the data processing',
+                                        pretty: true,
+                                        otherProperty: 'otherProperty'
+                                    }, function(err) {
+
+                                        if (err) {
+                                            console.log(err);
+                                            console.log('There was an error sending the email');
+                                        }
+                                        console.log('Email Sent');
+                                    });
+                                }
+
+                                res.status(200).send({ c: 1, h: _total - flights.length });
+
+                                console.log('status updated');
+                            }
+                        }).catch(error => {
+                            console.log(error);
+                            res.status(200).send({ c: 1, h: 0 });
                         });
+                } else {
+                    responseFn();
                 }
             })
             .catch(error => {
                 console.log(error);
-
-                res.status(500)
-                    .send({
-                        c: 0,
-                        h: 0,
-                        m: error
-                    });
+                res.status(200).send({ c: 1, h: 0 });
             });
     },
 
@@ -458,20 +483,86 @@ module.exports = {
 
     getArchivedFilename(req, res) {
 
+        var date = moment().subtract(30, 'days').toDate();
+        console.log(date);
+
         flights.findAll({
-            attributes: ['filename', 'createdAt'],
+            attributes: ['filename', 'updatedAt'],
             where: {
                 is_archived: true,
-                createdAt: {
+                updatedAt: {
+                    [Op.lt]: date,
+                }
+            }
+        }).then(flights => {
+            console.log(JSON.stringify(flights));
+            res.status(200)
+                .send({
+                    "filenames": JSON.stringify(flights)
+                });
+        }).catch(error => {
+            console.log(error);
+            res.status(500).send(error);
+        });
+    },
+
+    getArchivedFileDetails(req, res) {
+
+        var date = moment().subtract(30, 'days').toDate();
+        console.log(date);
+
+        function archived_file(filename, flight_id, uav_id, manufacturer_name, manufacturer_model) {
+            this.filename = filename;
+            this.flight_id = flight_id;
+            this.uav_id = uav_id;
+            this.manufacturer_name = manufacturer_name;
+            this.manufacturer_model = manufacturer_model;
+        }
+
+        flights.findAll({
+            where: {
+                is_archived: true,
+                updatedAt: {
+                    [Op.lt]: date,
+                }
+            }
+        }).then(flights => {
+
+            console.log(flights);
+            var archivedFileDetails = [];
+
+            for (var i = 0; i < flights.length; i++) {
+
+                var file_details = new archived_file();
+                file_details.filename = flights[i].filename;
+                file_details.flight_id = flights[i].id;
+                file_details.uav_id = flights[i].uav_id;
+                file_details.manufacturer_name = flights[i].metadata.manufacturer_name;
+                file_details.manufacturer_model = flights[i].metadata.manufacturer_model;
+
+                archivedFileDetails.push(file_details);
+            }
+
+            res.status(200)
+                .send(JSON.stringify(archivedFileDetails));
+        }).catch(error => {
+            console.log(error);
+            res.status(500).send(error);
+        });
+    },
+
+    deleteArchivedFlights(req, res) {
+
+        flights.destroy({
+            where: {
+                is_archived: true,
+                updatedAt: {
                     [Op.lt]: moment().subtract(30, 'days').toDate(),
                 }
             }
-        }).then( flights => {
-            console.log(JSON.stringify(flights));
-            res.status(200)
-            .send({
-                "filenames": JSON.stringify(flights)
-            });
+        }).then(flights => {
+            console.log(JSON.parse(flights));
+            res.status(200).send('deleted successfully');
         }).catch(error => {
             console.log(error);
             res.status(500).send(error);
@@ -494,4 +585,4 @@ module.exports = {
             res.status(500).send(error);
         });
     }
-};
+}
