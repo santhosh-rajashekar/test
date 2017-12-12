@@ -554,7 +554,7 @@ module.exports = {
             where: {
                 is_archived: true,
                 updatedAt: {
-                    [Op.lt]: moment().subtract(30, 'days').toDate(),
+                    [Op.lt]: moment().subtract(2, 'minutes').toDate(),
                 }
             }
         }).then(flights => {
@@ -572,7 +572,7 @@ module.exports = {
             where: {
                 is_archived: true,
                 createdAt: {
-                    [Op.lt]: moment().subtract(30, 'days').toDate(),
+                    [Op.lt]: moment().subtract(2, 'minutes').toDate(),
                 }
             }
         }).then( flights => {
