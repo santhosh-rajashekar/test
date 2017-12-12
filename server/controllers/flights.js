@@ -348,7 +348,7 @@ module.exports = {
 
                     //moment() is not behaving consistently
                     //TODO : to be verified, hence switching default javascript to get the local time on server
-                    var createdTime = moment().subtract(2, 'minutes').toDate();
+                    var createdTime = moment().subtract(60, 'minutes').toDate();
 
                     flights.findAll({
                             attributes: ['id', 'data', 'filename', 'createdAt', 'updatedAt'],
