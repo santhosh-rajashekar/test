@@ -140,7 +140,7 @@ module.exports = {
 
                     return uavhistories.create({
                             history: req.body.history,
-                            uav_id: req.body.id
+                            uav_id: req.params.id
                         })
                         .then(history => res.status(200).send(datauavs))
                         .catch(error => {
