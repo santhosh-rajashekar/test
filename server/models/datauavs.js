@@ -2,21 +2,22 @@
 
 module.exports = (sequelize, DataTypes) => {
 
-  var datauavs = sequelize.define('datauavs', {
-    data: DataTypes.JSONB
-  });
-
-  datauavs.associate = (models) => {
-    datauavs.hasMany(models.flights, {
-      foreignKey: 'uav_id',
-      as: 'flights',
+    var datauavs = sequelize.define('datauavs', {
+        data: DataTypes.JSONB,
+        is_archived: DataTypes.BOOLEAN
     });
 
-    datauavs.hasMany(models.uavhistories, {
-      foreignKey: 'uav_id',
-      as: 'uavhistories',
-    });
-  };
+    datauavs.associate = (models) => {
+        datauavs.hasMany(models.flights, {
+            foreignKey: 'uav_id',
+            as: 'flights',
+        });
 
-  return datauavs;
+        datauavs.hasMany(models.uavhistories, {
+            foreignKey: 'uav_id',
+            as: 'uavhistories',
+        });
+    };
+
+    return datauavs;
 };

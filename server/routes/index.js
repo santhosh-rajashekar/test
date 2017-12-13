@@ -51,7 +51,11 @@ module.exports = (app) => {
     app.post(urlPrefix + '/api/fileupload', flightController.fileupload);
     app.post(urlPrefix + '/api/flight/:id/component-confirmation', flightController.componentConfirmation);
     app.get(urlPrefix + '/api/flights/check-changes/:hash', flightController.checkFlightsChanges);
+    app.get(urlPrefix + '/api/flights/get-archived-filename', flightController.getArchivedFilename);
+    app.get(urlPrefix + '/api/flights/get-archived-flightdetails', flightController.getArchivedFileDetails);
+    app.get(urlPrefix + '/api/flights/remove-archived-flightdetails', flightController.deleteArchivedFlights);
     app.post(urlPrefix + '/api/flights/is-duplicate-file/:id', flightController.isDuplicateFile);
+
     app.post(urlPrefix + '/api/statuscheckfileupload/:filename', flightController.componentCheckedStatusFileUpload);
 
     app.post(urlPrefix + '/api/datauavs/create', uavController.create);

@@ -1,5 +1,6 @@
 const express = require('express');
 const mailer = require('express-mailer');
+var path = require("path");
 const logger = require('morgan');
 const bodyParser = require('body-parser');
 const debug = require('debug')('expressdebug:server');
@@ -10,6 +11,8 @@ const app = express();
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+
+app.use('/static', express.static(path.join(__dirname, 'docs')))
 
 app.use(function(req, res, next) {
     res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS,GET,PUT,HEAD,DELETE');

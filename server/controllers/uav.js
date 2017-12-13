@@ -1,5 +1,4 @@
 'use strict';
-
 const Sequelize = require('sequelize');
 const datauavs = require('../models').datauavs;
 const flights = require('../models').flights;
@@ -66,7 +65,7 @@ module.exports = {
 
                 const resObj = datauavs.map(datauav => {
                     let _last_status = 31;
-                    let _last_update = '--';
+                    let _last_update = null;
                     let _uploaded_flights = 0;
 
                     if (datauav.flights.length) {
@@ -80,7 +79,6 @@ module.exports = {
 
                         if (_last_flight.createdAt) {
                             _last_update = _last_flight.createdAt;
-                            _last_update = _last_update.toISOString().replace(/T/, ' ').replace(/\..+/, '');
                         }
                     }
 
@@ -181,14 +179,62 @@ module.exports = {
     },
 
     delete(req, res) {
-        return datauavs.destroy({
-                where: {
-                    id: req.params.id
+        return datauavs.findById(req.params.id)
+            .then(datauavs => {
+
+                if (!datauavs) {
+                    return res.status(404).send({
+                        message: 'Uav Not Found',
+                    });
                 }
-            })
-            .then(() => res.status(200).send('Deleted'))
-            .catch(error => {
-                res.status(500).send(error)
+
+                return datauavs.update({
+                    is_archived: true
+                }).then(datauavs => {
+
+                    if (datauavs) {
+                        flights.findAll({
+                                attributes: ['id', 'uav_id', 'is_archived'],
+                                where: {
+                                    uav_id: req.params.id,
+                                    is_archived: false
+                                }
+                            })
+                            .then(results => {
+
+                                if (!results) {
+                                    console.log('There are no associated flights for the datauav + ' + req.params.id);
+                                } else {
+                                    flights.update({
+                                        is_archived: true
+                                    }, {
+                                        where: {
+                                            uav_id: req.params.id,
+                                            is_archived: false
+                                        }
+                                    }).then(flights => {
+                                        console.log('Associated flights are also archived for the datauav + ' + req.params.id);
+                                    }).catch(error => {
+                                        console.log(error);
+                                        console.log('Error in Archiving Associated flights for the datauav + ' + req.params.id);
+                                    });
+                                }
+                            }).catch(error => {
+                                console.log(error);
+                                console.log('Error in Archiving Associated flights for the datauav + ' + req.params.id);
+                            });
+
+                        return res.status(200).send(datauavs);
+                    } else {
+                        return res.status(404).send({
+                            message: 'Uav Not Found',
+                        });
+                    }
+
+                }).catch(error => {
+                    console.log(error);
+                    res.status(500).send(error);
+                });
             });
     },
-};
+}
