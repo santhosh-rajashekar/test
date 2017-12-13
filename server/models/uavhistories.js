@@ -2,7 +2,7 @@
 module.exports = (sequelize, DataTypes) => {
     var uavhistory = sequelize.define('uavhistories', {
         history: DataTypes.JSONB,
-        user_id: DataTypes.INTEGER
+        uav_id: DataTypes.INTEGER
     });
 
     uavhistory.associate = (models) => {
