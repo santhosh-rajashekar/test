@@ -85,7 +85,7 @@ module.exports = {
       }
     }).then(datauavs => {
 
-      console.log('count:', datauavs[0].toJSON().no_uav);
+      // console.log('count:', datauavs[0].toJSON().no_uav);
 
       if ( datauavs[0].toJSON().no_uav > 0 ) {
 
