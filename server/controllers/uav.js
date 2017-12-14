@@ -82,8 +82,8 @@ module.exports = {
                             _last_status = _last_flight.data.status;
                         }
 
-                        if (_last_flight.createdAt) {
-                            _last_update = _last_flight.createdAt;
+                        if (_last_flight.updatedAt) {
+                            _last_update = _last_flight.updatedAt;
                         }
                     }
 
@@ -145,7 +145,7 @@ module.exports = {
 
                     return uavhistories.create({
                             history: req.body.history,
-                            uav_id: req.body.id
+                            uav_id: req.params.id
                         })
                         .then(history => res.status(200).send(datauavs))
                         .catch(error => {
