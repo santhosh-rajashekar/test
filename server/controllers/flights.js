@@ -118,19 +118,85 @@ module.exports = {
                 }
             };
 
+            var createFilightEntry = function createFlight(_metadata) {
+
+                return flights
+                    .create({
+                        metadata: _metadata,
+                        uav_id: JSON.parse(req.body.data).uavid,
+                        user_id: JSON.parse(req.body.data).user_id,
+                        /*
+                         * we are saving duplicate of this file name on metadata and filename column
+                         * for changing the database structure json to relational.
+                         */
+                        filename: '',
+                        file_md5_hash: JSON.parse(req.body.data).md5hash
+                    })
+                    .then(flights => {
+
+                        let _destination_filename = [
+                            'datafile',
+                            JSON.parse(req.body.data).manufacturer,
+                            JSON.parse(req.body.data).model,
+                            flights.id
+                        ].join('_') + path.extname(req.file.filename);
+
+                        _destination_filename = _destination_filename.toLowerCase();
+
+                        flights.update({
+                                filename: _destination_filename
+                            })
+                            .then(flight => {
+                                console.log('destination filename updated successfully');
+
+                                _create_final_file(req, res, flights, _destination_filename);
+
+                                archived_flights.create({
+                                    uav_id: JSON.parse(req.body.data).uavid
+                                }).then(archived_flights => {
+                                    console.log('entry created successfully in archived_flights table');
+                                }).catch(error => {
+                                    console.log(error);
+                                    console.log('error in creating row in the archived_flights table');
+                                });
+                            })
+                            .catch(error => {
+                                console.log(error);
+                                console.log('Error in updating the destination filename');
+                            });
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        res.status(500).send(error);
+                    });
+            };
+
             if (!_supported) {
 
-                let _destination_filename = [
-                    'datafile',
-                    JSON.parse(req.body.data).manufacturer,
-                    JSON.parse(req.body.data).model,
-                    _supported ? flights.id : (new Date().getTime()).toString()
-                ].join('_') + path.extname(req.file.filename);
+                //Note : for unsupported flights create a datauav entry if not exists and then create a flight log
+                var uav_id = JSON.parse(req.body.data).uavid;
 
-                _destination_filename = _destination_filename.toLowerCase();
-
-                _create_final_file(req, res, { id: 0 }, _destination_filename);
-                return;
+                return datauavs.findById(uav_id).then(results => {
+                        if (results == null) {
+                            return datauavs.create({
+                                    id: uav_id,
+                                    data: null
+                                })
+                                .then(datauavs => {
+                                    createFilightEntry(null);
+                                })
+                                .catch(error => {
+                                    console.log(error);
+                                    res.status(400).send(error);
+                                });
+                        } else {
+                            createFilightEntry(null);
+                        }
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        res.status(400).send(error);
+                    });
             }
 
             return datauavs.findById(JSON.parse(req.body.data).uavid)
@@ -157,55 +223,7 @@ module.exports = {
                         };
                     }
 
-                    return flights
-                        .create({
-                            metadata: _metadata,
-                            uav_id: JSON.parse(req.body.data).uavid,
-                            user_id: JSON.parse(req.body.data).user_id,
-                            /*
-                             * we are saving duplicate of this file name on metadata and filename column
-                             * for changing the database structure json to relational.
-                             */
-                            filename: '',
-                            file_md5_hash: JSON.parse(req.body.data).md5hash
-                        })
-                        .then(flights => {
-
-                            let _destination_filename = [
-                                'datafile',
-                                JSON.parse(req.body.data).manufacturer,
-                                JSON.parse(req.body.data).model,
-                                _supported ? flights.id : (new Date().getTime()).toString()
-                            ].join('_') + path.extname(req.file.filename);
-
-                            _destination_filename = _destination_filename.toLowerCase();
-
-                            flights.update({
-                                    filename: _destination_filename
-                                })
-                                .then(flight => {
-                                    console.log('destination filename updated successfully');
-
-                                    _create_final_file(req, res, flights, _destination_filename);
-
-                                    archived_flights.create({
-                                        uav_id: JSON.parse(req.body.data).uavid
-                                    }).then(archived_flights => {
-                                        console.log('entry created successfully in archived_flights table');
-                                    }).catch(error => {
-                                        console.log(error);
-                                        console.log('error in creating row in the archived_flights table');
-                                    });
-                                })
-                                .catch(error => {
-                                    console.log(error);
-                                    console.log('Error in updating the destination filename');
-                                });
-                        })
-                        .catch(error => {
-                            console.log(error);
-                            res.status(500).send(error);
-                        });
+                    createFilightEntry(_metadata);
                 })
                 .catch(error => {
                     console.log(error);
@@ -333,6 +351,9 @@ module.exports = {
         return flights.count({
                 where: {
                     data: null,
+                    metadata: {
+                        $ne: null
+                    },
                     is_archived: false
                 }
             })
@@ -354,6 +375,9 @@ module.exports = {
                             attributes: ['id', 'data', 'filename', 'createdAt', 'updatedAt'],
                             where: {
                                 data: null,
+                                metadata: {
+                                    $ne: null
+                                },
                                 is_archived: false,
                                 createdAt: {
                                     [Op.lt]: createdTime,
@@ -575,11 +599,41 @@ module.exports = {
                     [Op.lt]: moment().subtract(2, 'minutes').toDate(),
                 }
             }
-        }).then( flights => {
+        }).then(flights => {
             res.status(200).send('deleted successfully');
         }).catch(error => {
             console.log(error);
             res.status(500).send(error);
         });
+    },
+
+    getFlightsCountById(req, res) {
+
+        flights.findAll({
+            attributes: ['uav_id', [Sequelize.fn('COUNT', Sequelize.col('id')), "NumberOfFlights"]],
+            where: {
+                uav_id: {
+                    [Op.in]: req.body.ids
+                },
+                metadata: null,
+                is_archived: false
+            },
+            group: [
+                [Sequelize.col("uav_id")]
+            ]
+        }).then(results => {
+            console.log(results);
+            res.status(200).send(JSON.stringify(results));
+        })
+    },
+
+    getFlightHoursBySN() {
+
+        flights.findAll({
+            attributes: ['metadata', 'data'],
+        }).then(results => {
+            console.log(results);
+            return JSON.stringify(results);
+        })
     }
 }
