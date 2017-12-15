@@ -2,9 +2,8 @@
 
 module.exports = {
     up: (queryInterface, Sequelize) => {
-    return queryInterface.addColumn('flights', 'user_id', {
-        allowNull: true,
-        type: Sequelize.STRING,
+    return queryInterface.changeColumn('flights', 'updatedAt', {
+      defaultValue: sequelize.literal('CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)'),
     })
 },
 
