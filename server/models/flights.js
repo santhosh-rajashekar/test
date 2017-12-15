@@ -7,6 +7,7 @@ module.exports = (sequelize, DataTypes) => {
         is_archived: DataTypes.BOOLEAN,
         filename: DataTypes.STRING,
         file_md5_hash: DataTypes.STRING,
+        filesize: DataTypes.BIGINT,
         user_id: DataTypes.INTEGER,
     });
 
