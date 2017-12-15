@@ -100,7 +100,8 @@ module.exports = {
                 return res.status(500).send(err);
             }
 
-            var _supported = [true, 'true'].indexOf(JSON.parse(req.body.data).supportedDrone) >= 0;
+            var body_data = JSON.parse(req.body.data);
+            var _supported = [true, 'true'].indexOf(body_data.supportedDrone) >= 0;
 
             var _create_final_file = function(req, res, flights, _destination_filename) {
                 let _destination_dir = DIR_UPLOADED;
@@ -123,21 +124,22 @@ module.exports = {
                 return flights
                     .create({
                         metadata: _metadata,
-                        uav_id: JSON.parse(req.body.data).uavid,
-                        user_id: JSON.parse(req.body.data).user_id,
+                        uav_id: body_data.uavid,
+                        user_id: body_data.user_id,
                         /*
                          * we are saving duplicate of this file name on metadata and filename column
                          * for changing the database structure json to relational.
                          */
                         filename: '',
-                        file_md5_hash: JSON.parse(req.body.data).md5hash
+                        filesize: body_data.filesize,
+                        file_md5_hash: body_data.md5hash
                     })
                     .then(flights => {
 
                         let _destination_filename = [
                             'datafile',
-                            JSON.parse(req.body.data).manufacturer,
-                            JSON.parse(req.body.data).model,
+                            body_data.manufacturer,
+                            body_data.model,
                             flights.id
                         ].join('_') + path.extname(req.file.filename);
 
@@ -152,7 +154,7 @@ module.exports = {
                                 _create_final_file(req, res, flights, _destination_filename);
 
                                 archived_flights.create({
-                                    uav_id: JSON.parse(req.body.data).uavid
+                                    uav_id: body_data.uavid
                                 }).then(archived_flights => {
                                     console.log('entry created successfully in archived_flights table');
                                 }).catch(error => {
@@ -174,7 +176,7 @@ module.exports = {
             if (!_supported) {
 
                 //Note : for unsupported flights create a datauav entry if not exists and then create a flight log
-                var uav_id = JSON.parse(req.body.data).uavid;
+                var uav_id = body_data.uavid;
 
                 return datauavs.findById(uav_id).then(results => {
                         if (results == null) {
@@ -199,7 +201,7 @@ module.exports = {
                     });
             }
 
-            return datauavs.findById(JSON.parse(req.body.data).uavid)
+            return datauavs.findById(body_data.uavid)
                 .then(datauavs => {
                     if (!datauavs) {
                         return res.status(404).send({
@@ -216,10 +218,10 @@ module.exports = {
                      */
                     _metadata.upload_filename = req.file.originalname;
 
-                    if ([true, 'true'].indexOf(JSON.parse(req.body.data).supportedDrone) >= 0) {
+                    if ([true, 'true'].indexOf(body_data.supportedDrone) >= 0) {
                         _metadata.battery = {
-                            serial_number: _metadata.batteries[JSON.parse(req.body.data).batteryIndex].serial_number,
-                            part_no: _metadata.batteries[JSON.parse(req.body.data).batteryIndex].part_no
+                            serial_number: _metadata.batteries[body_data.batteryIndex].serial_number,
+                            part_no: _metadata.batteries[body_data.batteryIndex].part_no
                         };
                     }
 
