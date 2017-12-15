@@ -82,6 +82,10 @@ module.exports = {
                             _last_status = _last_flight.data.status;
                         }
 
+                        if( _last_flight.data == null ) {
+                            _last_status = 31;
+                        }
+
                         if (_last_flight.updatedAt) {
                             _last_update = _last_flight.updatedAt;
                         }
