@@ -12,6 +12,8 @@ const path = require("path");
 const moment = require('moment');
 var _ = require('lodash');
 const Sequelize = require('sequelize');
+const sequelize = require('../models/index').sequelize;
+
 
 const Op = Sequelize.Op;
 const app = express();
@@ -249,7 +251,7 @@ module.exports = {
             .then(flights => res.status(200).send(flights))
             .catch(error => res.status(400).send(error));
     },
-    getStatus(req, res) {
+    getCockpitSummary(req, res) {
 
         let ids;
         ids = flights.findAll({
@@ -350,105 +352,76 @@ module.exports = {
     },
 
     checkFlightsChanges(req, res) {
-        return flights.count({
+
+        //This method just check if the status is received or not within the expected time and send an email based on that
+        //moment() is not behaving consistently
+        //TODO : Time shown on the PgAdmin 4.2 UI is not same as what we get from Sequelize data model
+        var createdTime = moment().subtract(60, 'minutes').toDate();
+
+        flights.findAll({
+                attributes: ['id', 'data', 'filename', 'createdAt', 'updatedAt'],
                 where: {
                     data: null,
                     metadata: {
                         $ne: null
                     },
-                    is_archived: false
+                    is_archived: false,
+                    createdAt: {
+                        [Op.lt]: createdTime,
+                    }
                 }
             })
-            .then(_total => {
-                var responseFn = function() {
-                    res.status(200).send({
-                        c: ((+req.params.hash >= 0 && +req.params.hash !== _total) ? 1 : 0),
-                        h: _total
-                    });
-                };
+            .then(flights => {
+                if (flights && flights.length < 1) {
+                    console.log('No flight found');
+                    return res.status(200).send('No flight found');
+                } else {
+                    console.log(flights.length + ' flights found');
 
-                if (_total > 0) {
+                    var message = 'Flights with below details have not received any analyzed results within the expected time';
+                    message = message + '\n' + 'Filenames :';
 
-                    //moment() is not behaving consistently
-                    //TODO : to be verified, hence switching default javascript to get the local time on server
-                    var createdTime = moment().subtract(60, 'minutes').toDate();
+                    for (var i = 0; i < flights.length; i++) {
+                        message = message + '\n' + flights[i].dataValues.filename;
 
-                    flights.findAll({
-                            attributes: ['id', 'data', 'filename', 'createdAt', 'updatedAt'],
-                            where: {
-                                data: null,
-                                metadata: {
-                                    $ne: null
-                                },
-                                is_archived: false,
-                                createdAt: {
-                                    [Op.lt]: createdTime,
-                                }
-                            }
-                        })
-                        .then(flights => {
-
-                            if (flights && flights.length < 1) {
-                                console.log('No flight found');
-                                responseFn();
-                            } else {
-                                console.log(flights.length + ' flights found');
-
-                                var message = 'Flights with below details have not received any analyzed results within the expected time';
-                                message = message + '\n' + 'Filenames :';
-
-                                for (var i = 0; i < flights.length; i++) {
-                                    message = message + '\n' + flights[i].dataValues.filename;
-
-                                    flights[i].update({
-                                        data: { "status": 6 },
-                                        updatedAt: moment().toDate(),
-                                    }).catch(error => {
-                                        console.log(error);
-                                    });
-                                }
-
-                                console.log('Message for Email =');
-                                console.log(message);
-
-                                var toList;
-                                if (process.env.NODE_ENV == 'production') {
-                                    toList = 'philipp.koehler@lht.dlh.de,santhoshakaroti.rajashekar@altran.com,saeed.ahmed@altran.com,adnan.abdulhai@altran.com';
-                                } else if (process.env.NODE_ENV == 'test') {
-                                    toList = 'santhoshakaroti.rajashekar@altran.com, saeed.ahmed@altran.com';
-                                }
-
-                                if (process.env.NODE_ENV == 'production' || process.env.NODE_ENV == 'test') {
-                                    sendMailer.mailer.send('email', {
-                                        to: toList,
-                                        subject: 'There is some problems in the data processing',
-                                        pretty: true,
-                                        otherProperty: message
-                                    }, function(err) {
-
-                                        if (err) {
-                                            console.log(err);
-                                            console.log('There was an error sending the email');
-                                        }
-                                        console.log('Email Sent');
-                                    });
-                                }
-
-                                res.status(200).send({ c: 1, h: _total - flights.length });
-
-                                console.log('status updated');
-                            }
+                        flights[i].update({
+                            data: { "status": 6 },
+                            updatedAt: moment().toDate(),
                         }).catch(error => {
                             console.log(error);
-                            res.status(200).send({ c: 1, h: 0 });
                         });
-                } else {
-                    responseFn();
+                    }
+
+                    console.log('Message for Email =');
+                    console.log(message);
+
+                    var toList;
+                    if (process.env.NODE_ENV == 'production') {
+                        toList = 'philipp.koehler@lht.dlh.de,santhoshakaroti.rajashekar@altran.com,saeed.ahmed@altran.com,adnan.abdulhai@altran.com';
+                    } else if (process.env.NODE_ENV == 'test') {
+                        toList = 'santhoshakaroti.rajashekar@altran.com, saeed.ahmed@altran.com';
+                    }
+
+                    if (process.env.NODE_ENV == 'production' || process.env.NODE_ENV == 'test') {
+                        sendMailer.mailer.send('email', {
+                            to: toList,
+                            subject: 'There is some problems in the data processing',
+                            pretty: true,
+                            otherProperty: message
+                        }, function(err) {
+                            console.log('Email Sent');
+                            if (err) {
+                                console.log(err);
+                                console.log('But; There was an error sending the email');
+                                return res.status(200).send(error);
+                            }
+                        });
+                    }
+                    return res.status(200).send('Status updated & Email sent');
                 }
-            })
-            .catch(error => {
+            }).catch(error => {
                 console.log(error);
-                res.status(200).send({ c: 1, h: 0 });
+                return res.status(200).send(error);
             });
     },
 
@@ -627,6 +600,48 @@ module.exports = {
             console.log(results);
             res.status(200).send(JSON.stringify(results));
         })
+    },
+
+    getFlightsStatusById(req, res) {
+
+        let ids;
+        ids = flights.findAll({
+
+                attributes: [
+                    [Sequelize.fn('MAX', Sequelize.col('id')), "id"]
+                ],
+                where: {
+                    uav_id: {
+                        [Op.in]: req.body.ids
+                    },
+                    is_archived: false
+                },
+                group: [
+                    [Sequelize.col("uav_id")]
+                ]
+            })
+            .then(function(flight) {
+                console.log('flight');
+                console.log(flight);
+
+                if (flight && flight.length) {
+                    ids = _.map(flight, function(flig) {
+                        return flig.id;
+                    });
+
+                    sequelize.query("SELECT uav_id, data->>'status' AS lastFlightStatus FROM flights WHERE flights.id IN (:flight_ids);", { replacements: { flight_ids: ids }, type: Sequelize.QueryTypes.SELECT })
+                        .then(results => {
+                            console.log(results);
+                            res.status(200).send(JSON.stringify(results));
+                        })
+                } else {
+                    res.status(200).send([]);
+                }
+            })
+            .catch(error => {
+                console.log(error);
+                res.status(400).send(error);
+            });
     },
 
     getFlightHoursBySN() {

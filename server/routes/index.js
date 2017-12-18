@@ -38,16 +38,7 @@ module.exports = (app) => {
      */
     app.post(urlPrefix + '/api/flight/:id', flightController.archivedFlight);
 
-    /**
-     * @api {get} /api/flight/status Get flight status
-     * @apiName Get flight status
-     * @apiGroup Flight
-     * @apiExample Example usage:
-     * curl -i http://0.0.0.0:3000/api/flight/status
-     *
-     * @apiSuccess {json} flight status.
-     */
-    app.post(urlPrefix + '/api/get-flight-status', flightController.getStatus);
+    app.post(urlPrefix + '/api/get-cockpit-summary', flightController.getCockpitSummary);
     app.post(urlPrefix + '/api/fileupload', flightController.fileupload);
     app.post(urlPrefix + '/api/flight/:id/component-confirmation', flightController.componentConfirmation);
     app.get(urlPrefix + '/api/flights/check-changes/:hash', flightController.checkFlightsChanges);
@@ -56,6 +47,7 @@ module.exports = (app) => {
     app.get(urlPrefix + '/api/flights/remove-archived-flightdetails', flightController.deleteArchivedFlights);
     app.post(urlPrefix + '/api/flights/is-duplicate-file/:id', flightController.isDuplicateFile);
     app.post(urlPrefix + '/api/flights/getFlightsCountById', flightController.getFlightsCountById);
+    app.post(urlPrefix + '/api/flights/getFlightsStatusById', flightController.getFlightsStatusById);
 
     app.post(urlPrefix + '/api/statuscheckfileupload/:filename', flightController.componentCheckedStatusFileUpload);
 
