@@ -356,7 +356,7 @@ module.exports = {
         //This method just check if the status is received or not within the expected time and send an email based on that
         //moment() is not behaving consistently
         //TODO : Time shown on the PgAdmin 4.2 UI is not same as what we get from Sequelize data model
-        var createdTime = moment().subtract(60, 'minutes').toDate();
+        var createdTime = moment().subtract(180, 'minutes').toDate();
 
         flights.findAll({
                 attributes: ['id', 'data', 'filename', 'createdAt', 'updatedAt'],
