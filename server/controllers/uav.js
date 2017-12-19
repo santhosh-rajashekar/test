@@ -51,11 +51,16 @@ module.exports = {
                 include: [{
                     model: flights,
                     as: 'flights',
+                    where: {
+                        is_archived: false
+                    },
+                    required: false
                 }],
                 where: {
                     id: {
                         [Op.in]: req.body.ids
-                    }
+                    },
+                    is_archived: false
                 },
                 order: [
                     ['flights', 'id', 'ASC']
@@ -64,7 +69,7 @@ module.exports = {
             .then(datauavs => {
 
                 const resObj = datauavs.map(datauav => {
-                    let _last_status = 31;
+                    let _last_status = 0;
                     let _last_update = null;
                     let _uploaded_flights = 0;
 
@@ -75,6 +80,10 @@ module.exports = {
 
                         if (_last_flight.data && _last_flight.data.status) {
                             _last_status = _last_flight.data.status;
+                        }
+
+                        if (_last_flight.metadata && _last_flight.data == null) {
+                            _last_status = 31;
                         }
 
                         if (_last_flight.updatedAt) {

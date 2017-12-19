@@ -12,6 +12,8 @@ const path = require("path");
 const moment = require('moment');
 var _ = require('lodash');
 const Sequelize = require('sequelize');
+const sequelize = require('../models/index').sequelize;
+
 
 const Op = Sequelize.Op;
 const app = express();
@@ -100,7 +102,8 @@ module.exports = {
                 return res.status(500).send(err);
             }
 
-            var _supported = [true, 'true'].indexOf(JSON.parse(req.body.data).supportedDrone) >= 0;
+            var body_data = JSON.parse(req.body.data);
+            var _supported = [true, 'true'].indexOf(body_data.supportedDrone) >= 0;
 
             var _create_final_file = function(req, res, flights, _destination_filename) {
                 let _destination_dir = DIR_UPLOADED;
@@ -118,22 +121,89 @@ module.exports = {
                 }
             };
 
+            var createFilightEntry = function createFlight(_metadata) {
+
+                return flights
+                    .create({
+                        metadata: _metadata,
+                        uav_id: body_data.uavid,
+                        user_id: body_data.user_id,
+                        /*
+                         * we are saving duplicate of this file name on metadata and filename column
+                         * for changing the database structure json to relational.
+                         */
+                        filename: '',
+                        filesize: body_data.filesize,
+                        file_md5_hash: body_data.md5hash
+                    })
+                    .then(flights => {
+
+                        let _destination_filename = [
+                            'datafile',
+                            body_data.manufacturer,
+                            body_data.model,
+                            flights.id
+                        ].join('_') + path.extname(req.file.filename);
+
+                        _destination_filename = _destination_filename.toLowerCase();
+
+                        flights.update({
+                                filename: _destination_filename
+                            })
+                            .then(flight => {
+                                console.log('destination filename updated successfully');
+
+                                _create_final_file(req, res, flights, _destination_filename);
+
+                                archived_flights.create({
+                                    uav_id: body_data.uavid
+                                }).then(archived_flights => {
+                                    console.log('entry created successfully in archived_flights table');
+                                }).catch(error => {
+                                    console.log(error);
+                                    console.log('error in creating row in the archived_flights table');
+                                });
+                            })
+                            .catch(error => {
+                                console.log(error);
+                                console.log('Error in updating the destination filename');
+                            });
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        res.status(500).send(error);
+                    });
+            };
+
             if (!_supported) {
 
-                let _destination_filename = [
-                    'datafile',
-                    JSON.parse(req.body.data).manufacturer,
-                    JSON.parse(req.body.data).model,
-                    _supported ? flights.id : (new Date().getTime()).toString()
-                ].join('_') + path.extname(req.file.filename);
+                //Note : for unsupported flights create a datauav entry if not exists and then create a flight log
+                var uav_id = body_data.uavid;
 
-                _destination_filename = _destination_filename.toLowerCase();
-
-                _create_final_file(req, res, { id: 0 }, _destination_filename);
-                return;
+                return datauavs.findById(uav_id).then(results => {
+                        if (results == null) {
+                            return datauavs.create({
+                                    id: uav_id,
+                                    data: null
+                                })
+                                .then(datauavs => {
+                                    createFilightEntry(null);
+                                })
+                                .catch(error => {
+                                    console.log(error);
+                                    res.status(400).send(error);
+                                });
+                        } else {
+                            createFilightEntry(null);
+                        }
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        res.status(400).send(error);
+                    });
             }
 
-            return datauavs.findById(JSON.parse(req.body.data).uavid)
+            return datauavs.findById(body_data.uavid)
                 .then(datauavs => {
                     if (!datauavs) {
                         return res.status(404).send({
@@ -150,62 +220,14 @@ module.exports = {
                      */
                     _metadata.upload_filename = req.file.originalname;
 
-                    if ([true, 'true'].indexOf(JSON.parse(req.body.data).supportedDrone) >= 0) {
+                    if ([true, 'true'].indexOf(body_data.supportedDrone) >= 0) {
                         _metadata.battery = {
-                            serial_number: _metadata.batteries[JSON.parse(req.body.data).batteryIndex].serial_number,
-                            part_no: _metadata.batteries[JSON.parse(req.body.data).batteryIndex].part_no
+                            serial_number: _metadata.batteries[body_data.batteryIndex].serial_number,
+                            part_no: _metadata.batteries[body_data.batteryIndex].part_no
                         };
                     }
 
-                    return flights
-                        .create({
-                            metadata: _metadata,
-                            uav_id: JSON.parse(req.body.data).uavid,
-                            user_id: JSON.parse(req.body.data).user_id,
-                            /*
-                             * we are saving duplicate of this file name on metadata and filename column
-                             * for changing the database structure json to relational.
-                             */
-                            filename: '',
-                            file_md5_hash: JSON.parse(req.body.data).md5hash
-                        })
-                        .then(flights => {
-
-                            let _destination_filename = [
-                                'datafile',
-                                JSON.parse(req.body.data).manufacturer,
-                                JSON.parse(req.body.data).model,
-                                _supported ? flights.id : (new Date().getTime()).toString()
-                            ].join('_') + path.extname(req.file.filename);
-
-                            _destination_filename = _destination_filename.toLowerCase();
-
-                            flights.update({
-                                    filename: _destination_filename
-                                })
-                                .then(flight => {
-                                    console.log('destination filename updated successfully');
-
-                                    _create_final_file(req, res, flights, _destination_filename);
-
-                                    archived_flights.create({
-                                        uav_id: JSON.parse(req.body.data).uavid
-                                    }).then(archived_flights => {
-                                        console.log('entry created successfully in archived_flights table');
-                                    }).catch(error => {
-                                        console.log(error);
-                                        console.log('error in creating row in the archived_flights table');
-                                    });
-                                })
-                                .catch(error => {
-                                    console.log(error);
-                                    console.log('Error in updating the destination filename');
-                                });
-                        })
-                        .catch(error => {
-                            console.log(error);
-                            res.status(500).send(error);
-                        });
+                    createFilightEntry(_metadata);
                 })
                 .catch(error => {
                     console.log(error);
@@ -229,7 +251,7 @@ module.exports = {
             .then(flights => res.status(200).send(flights))
             .catch(error => res.status(400).send(error));
     },
-    getStatus(req, res) {
+    getCockpitSummary(req, res) {
 
         let ids;
         ids = flights.findAll({
@@ -330,99 +352,76 @@ module.exports = {
     },
 
     checkFlightsChanges(req, res) {
-        return flights.count({
+
+        //This method just check if the status is received or not within the expected time and send an email based on that
+        //moment() is not behaving consistently
+        //TODO : Time shown on the PgAdmin 4.2 UI is not same as what we get from Sequelize data model
+        var createdTime = moment().subtract(60, 'minutes').toDate();
+
+        flights.findAll({
+                attributes: ['id', 'data', 'filename', 'createdAt', 'updatedAt'],
                 where: {
                     data: null,
-                    is_archived: false
+                    metadata: {
+                        $ne: null
+                    },
+                    is_archived: false,
+                    createdAt: {
+                        [Op.lt]: createdTime,
+                    }
                 }
             })
-            .then(_total => {
-                var responseFn = function() {
-                    res.status(200).send({
-                        c: ((+req.params.hash >= 0 && +req.params.hash !== _total) ? 1 : 0),
-                        h: _total
-                    });
-                };
+            .then(flights => {
+                if (flights && flights.length < 1) {
+                    console.log('No flight found');
+                    return res.status(200).send('No flight found');
+                } else {
+                    console.log(flights.length + ' flights found');
 
-                if (_total > 0) {
+                    var message = 'Flights with below details have not received any analyzed results within the expected time';
+                    message = message + '\n' + 'Filenames :';
 
-                    //moment() is not behaving consistently
-                    //TODO : to be verified, hence switching default javascript to get the local time on server
-                    var createdTime = moment().subtract(60, 'minutes').toDate();
+                    for (var i = 0; i < flights.length; i++) {
+                        message = message + '\n' + flights[i].dataValues.filename;
 
-                    flights.findAll({
-                            attributes: ['id', 'data', 'filename', 'createdAt', 'updatedAt'],
-                            where: {
-                                data: null,
-                                is_archived: false,
-                                createdAt: {
-                                    [Op.lt]: createdTime,
-                                }
-                            }
-                        })
-                        .then(flights => {
-
-                            if (flights && flights.length < 1) {
-                                console.log('No flight found');
-                                responseFn();
-                            } else {
-                                console.log(flights.length + ' flights found');
-
-                                var message = 'Flights with below details have not received any analyzed results within the expected time';
-                                message = message + '\n' + 'Filenames :';
-
-                                for (var i = 0; i < flights.length; i++) {
-                                    message = message + '\n' + flights[i].dataValues.filename;
-
-                                    flights[i].update({
-                                        data: { "status": 6 },
-                                        updatedAt: moment().toDate(),
-                                    }).catch(error => {
-                                        console.log(error);
-                                    });
-                                }
-
-                                console.log('Message for Email =');
-                                console.log(message);
-
-                                var toList;
-                                if (process.env.NODE_ENV == 'production') {
-                                    toList = 'philipp.koehler@lht.dlh.de,santhoshakaroti.rajashekar@altran.com,saeed.ahmed@altran.com,adnan.abdulhai@altran.com';
-                                } else if (process.env.NODE_ENV == 'test') {
-                                    toList = 'santhoshakaroti.rajashekar@altran.com, saeed.ahmed@altran.com';
-                                }
-
-                                if (process.env.NODE_ENV == 'production' || process.env.NODE_ENV == 'test') {
-                                    sendMailer.mailer.send('email', {
-                                        to: toList,
-                                        subject: 'There is some problems in the data processing',
-                                        pretty: true,
-                                        otherProperty: message
-                                    }, function(err) {
-
-                                        if (err) {
-                                            console.log(err);
-                                            console.log('There was an error sending the email');
-                                        }
-                                        console.log('Email Sent');
-                                    });
-                                }
-
-                                res.status(200).send({ c: 1, h: _total - flights.length });
-
-                                console.log('status updated');
-                            }
+                        flights[i].update({
+                            data: { "status": 6 },
+                            updatedAt: moment().toDate(),
                         }).catch(error => {
                             console.log(error);
-                            res.status(200).send({ c: 1, h: 0 });
                         });
-                } else {
-                    responseFn();
+                    }
+
+                    console.log('Message for Email =');
+                    console.log(message);
+
+                    var toList;
+                    if (process.env.NODE_ENV == 'production') {
+                        toList = 'philipp.koehler@lht.dlh.de,santhoshakaroti.rajashekar@altran.com,saeed.ahmed@altran.com,adnan.abdulhai@altran.com';
+                    } else if (process.env.NODE_ENV == 'test') {
+                        toList = 'santhoshakaroti.rajashekar@altran.com, saeed.ahmed@altran.com';
+                    }
+
+                    if (process.env.NODE_ENV == 'production' || process.env.NODE_ENV == 'test') {
+                        sendMailer.mailer.send('email', {
+                            to: toList,
+                            subject: 'There is some problems in the data processing',
+                            pretty: true,
+                            otherProperty: message
+                        }, function(err) {
+                            console.log('Email Sent');
+                            if (err) {
+                                console.log(err);
+                                console.log('But; There was an error sending the email');
+                                return res.status(200).send(error);
+                            }
+                        });
+                    }
+                    return res.status(200).send('Status updated & Email sent');
                 }
-            })
-            .catch(error => {
+            }).catch(error => {
                 console.log(error);
-                res.status(200).send({ c: 1, h: 0 });
+                return res.status(200).send(error);
             });
     },
 
@@ -575,11 +574,85 @@ module.exports = {
                     [Op.lt]: moment().subtract(2, 'minutes').toDate(),
                 }
             }
-        }).then( flights => {
+        }).then(flights => {
             res.status(200).send('deleted successfully');
         }).catch(error => {
             console.log(error);
             res.status(500).send(error);
         });
+    },
+
+    getFlightsCountAndLastUpdatedById(req, res) {
+
+        flights.findAll({
+            attributes: ['uav_id', [Sequelize.fn('COUNT', Sequelize.col('id')), "NumberOfFlights"],
+                [Sequelize.fn('MAX', Sequelize.col('updatedAt')), "LastUpdatedAt"]
+            ],
+            where: {
+                uav_id: {
+                    [Op.in]: req.body.ids
+                },
+                metadata: null,
+                is_archived: false
+            },
+            group: [
+                [Sequelize.col("uav_id")]
+            ]
+        }).then(results => {
+            console.log(results);
+            res.status(200).send(JSON.stringify(results));
+        })
+    },
+
+    getFlightsStatusById(req, res) {
+
+        let ids;
+        ids = flights.findAll({
+
+                attributes: [
+                    [Sequelize.fn('MAX', Sequelize.col('id')), "id"]
+                ],
+                where: {
+                    uav_id: {
+                        [Op.in]: req.body.ids
+                    },
+                    is_archived: false
+                },
+                group: [
+                    [Sequelize.col("uav_id")]
+                ]
+            })
+            .then(function(flight) {
+                console.log('flight');
+                console.log(flight);
+
+                if (flight && flight.length) {
+                    ids = _.map(flight, function(flig) {
+                        return flig.id;
+                    });
+
+                    sequelize.query("SELECT uav_id, data->>'status' AS lastFlightStatus FROM flights WHERE flights.id IN (:flight_ids);", { replacements: { flight_ids: ids }, type: Sequelize.QueryTypes.SELECT })
+                        .then(results => {
+                            console.log(results);
+                            res.status(200).send(JSON.stringify(results));
+                        })
+                } else {
+                    res.status(200).send([]);
+                }
+            })
+            .catch(error => {
+                console.log(error);
+                res.status(400).send(error);
+            });
+    },
+
+    getFlightHoursBySN() {
+
+        flights.findAll({
+            attributes: ['metadata', 'data'],
+        }).then(results => {
+            console.log(results);
+            return JSON.stringify(results);
+        })
     }
 }
