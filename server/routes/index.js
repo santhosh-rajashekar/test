@@ -46,7 +46,7 @@ module.exports = (app) => {
     app.get(urlPrefix + '/api/flights/get-archived-flightdetails', flightController.getArchivedFileDetails);
     app.get(urlPrefix + '/api/flights/remove-archived-flightdetails', flightController.deleteArchivedFlights);
     app.post(urlPrefix + '/api/flights/is-duplicate-file/:id', flightController.isDuplicateFile);
-    app.post(urlPrefix + '/api/flights/getFlightsCountById', flightController.getFlightsCountById);
+    app.post(urlPrefix + '/api/flights/getFlightsCountAndLastUpdatedById', flightController.getFlightsCountAndLastUpdatedById);
     app.post(urlPrefix + '/api/flights/getFlightsStatusById', flightController.getFlightsStatusById);
 
     app.post(urlPrefix + '/api/statuscheckfileupload/:filename', flightController.componentCheckedStatusFileUpload);

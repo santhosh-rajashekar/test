@@ -59,7 +59,7 @@ module.exports = {
                 where: {
                     id: {
                         [Op.in]: req.body.ids
-                    }, 
+                    },
                     is_archived: false
                 },
                 order: [
@@ -82,7 +82,7 @@ module.exports = {
                             _last_status = _last_flight.data.status;
                         }
 
-                        if( _last_flight.data == null ) {
+                        if (_last_flight.metadata && _last_flight.data == null) {
                             _last_status = 31;
                         }
 

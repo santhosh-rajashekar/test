@@ -582,10 +582,12 @@ module.exports = {
         });
     },
 
-    getFlightsCountById(req, res) {
+    getFlightsCountAndLastUpdatedById(req, res) {
 
         flights.findAll({
-            attributes: ['uav_id', [Sequelize.fn('COUNT', Sequelize.col('id')), "NumberOfFlights"]],
+            attributes: ['uav_id', [Sequelize.fn('COUNT', Sequelize.col('id')), "NumberOfFlights"],
+                [Sequelize.fn('MAX', Sequelize.col('updatedAt')), "LastUpdatedAt"]
+            ],
             where: {
                 uav_id: {
                     [Op.in]: req.body.ids
