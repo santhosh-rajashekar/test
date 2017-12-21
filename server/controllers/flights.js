@@ -3,6 +3,7 @@
 const flights = require('../models').flights;
 const archived_flights = require('../models').archived_flights;
 const datauavs = require('../models').datauavs;
+const partnumberController = require('./partnumber');
 
 const express = require('express');
 const mailer = require('express-mailer');
@@ -646,13 +647,4 @@ module.exports = {
             });
     },
 
-    getFlightHoursBySN() {
-
-        flights.findAll({
-            attributes: ['metadata', 'data'],
-        }).then(results => {
-            console.log(results);
-            return JSON.stringify(results);
-        })
-    }
 }
