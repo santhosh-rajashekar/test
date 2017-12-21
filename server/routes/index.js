@@ -1,4 +1,5 @@
 const flightController = require('../controllers').flights;
+const analyticsController = require('../controllers').analytics;
 const uavController = require('../controllers').uav;
 const uavhistoryController = require('../controllers').uavhistory;
 const partnumberController = require('../controllers').partnumber;
@@ -81,6 +82,15 @@ module.exports = (app) => {
     app.get(urlPrefix + '/api/partnumbers', partnumberController.list);
     app.post(urlPrefix + '/api/create-components', partnumberController.createDefaultUavDataComponent);
 
-    app.get(urlPrefix + '/api/flights/getFlightHoursBySN', flightController.getFlightHoursBySN);
 
+
+    app.get(urlPrefix + '/api/analytics/getTotalFlightHoursBySN/:serial_number', analyticsController.getTotalFlightHoursBySN);
+    app.get(urlPrefix + '/api/analytics/getAllFlightLocationsBySN/:serial_number', analyticsController.getAllFlightLocationsBySN);
+    app.get(urlPrefix + '/api/analytics/getTotalFlightHoursAndCycleyByPN/:part_number', analyticsController.getTotalFlightHoursByPN);
+    app.get(urlPrefix + '/api/analytics/getTotalFlightHoursAndCycleyByPN/:part_number/:position', analyticsController.getTotalFlightHoursAndCycleyByPNPOS);
+    app.get(urlPrefix + '/api/analytics/getReasonsForComponentUpdateForAllUAVs', analyticsController.getReasonsForComponentUpdateForAllUAVs);
+    app.get(urlPrefix + '/api/analytics/getReasonsForComponentUpdateByUAVID/:uav_id', analyticsController.getReasonsForComponentUpdateByUAVID);
+    app.get(urlPrefix + '/api/analytics/getReasonsForComponentUpdateByMM/:manufacturer/:model', analyticsController.getReasonsForComponentUpdateByMM);
+    app.get(urlPrefix + '/api/analytics/getReasonsForComponentUpdateByPN/:part_number', analyticsController.getReasonsForComponentUpdateByPN);
+    app.get(urlPrefix + '/api/analytics/getAnalysisResultsBySN/:serial_number', analyticsController.getAnalysisResultsBySN);
 };

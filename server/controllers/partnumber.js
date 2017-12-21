@@ -82,6 +82,131 @@ module.exports = {
         return serials;
     },
 
+    containsPartNumberAtPos(uav, partNumber, position) {
+
+        var partNumberFound = false;
+        partNumber = partNumber.toLowerCase();
+
+        for (let i = 0; i < uav.components.length; i++) {
+
+            let component = uav.components[i];
+
+            if (component.bldc.BLDC_Partnumber && component.bldc.BLDC_Partnumber.toLowerCase() === partNumber && i == position) {
+                partNumberFound = true;
+                break;
+            }
+
+            if (component.esc.ESC_Partnumber && component.esc.ESC_Partnumber.toLowerCase() === partNumber && i == position) {
+                partNumberFound = true;
+                break;
+            }
+
+            if (component.prop.PROP_Partnumber && component.prop.PROP_Partnumber.toLowerCase() === partNumber && i == position) {
+                partNumberFound = true;
+                break;
+            }
+        }
+
+        return partNumberFound;
+    },
+
+    containsPartNumber(uav, partNumber) {
+
+        var partNumberFound = false;
+        partNumber = partNumber.toLowerCase();
+
+        if (uav.fcs && uav.fcs.length) {
+            for (let i = 0; i < uav.fcs.length; i++) {
+
+                if (uav.fcs[i].FC_Partnumber && uav.fcs[i].FC_Partnumber.toLowerCase() === partNumber) {
+                    partNumberFound = true;
+                    break;
+                }
+            }
+        }
+
+        if (uav.batteries && uav.batteries.length) {
+            for (let i = 0; i < uav.batteries.length; i++) {
+
+                if (uav.batteries[i].BAT_Partnumber && uav.batteries[i].BAT_Partnumber.toLowerCase() === partNumber) {
+                    partNumberFound = true;
+                    break;
+                }
+            }
+        }
+
+        for (let i = 0; i < uav.components.length; i++) {
+
+            let component = uav.components[i];
+
+            if (component.bldc.BLDC_Partnumber && component.bldc.BLDC_Partnumber.toLowerCase() === partNumber) {
+                partNumberFound = true;
+                break;
+            }
+
+            if (component.esc.ESC_Partnumber && component.esc.ESC_Partnumber.toLowerCase() === partNumber) {
+                partNumberFound = true;
+                break;
+            }
+
+            if (component.prop.PROP_Partnumber && component.prop.PROP_Partnumber.toLowerCase() === partNumber) {
+                partNumberFound = true;
+                break;
+            }
+        }
+
+        return partNumberFound;
+    },
+
+    containsSerialNumber(uav, serialNumber) {
+
+        var serialNumberFound = false;
+        serialNumber = serialNumber.toLowerCase();
+
+        if (uav.fcs && uav.fcs.length) {
+            for (let i = 0; i < uav.fcs.length; i++) {
+
+                if (uav.fcs[i].serial_number && uav.fcs[i].serial_number.toLowerCase() === serialNumber) {
+                    serialNumberFound = true;
+                    break;
+                }
+            }
+        }
+        if (uav.batteries && uav.batteries.length) {
+            for (let i = 0; i < uav.batteries.length; i++) {
+
+                if (uav.batteries[i].serial_number && uav.batteries[i].serial_number.toLowerCase() === serialNumber) {
+                    serialNumberFound = true;
+                    break;
+                }
+            }
+        }
+
+
+
+        for (let i = 0; i < uav.components.length; i++) {
+
+            let component = uav.components[i];
+
+            if (component.bldc.serial_number && component.bldc.serial_number.toLowerCase() === serialNumber) {
+                serialNumberFound = true;
+                break;
+            }
+
+            if (component.esc.serial_number && component.esc.serial_number.toLowerCase() === serialNumber) {
+                serialNumberFound = true;
+                break;
+            }
+
+            if (component.prop.serial_number && component.prop.serial_number.toLowerCase() === serialNumber) {
+                serialNumberFound = true;
+                break;
+            }
+        }
+
+        return serialNumberFound;
+    },
+
     createDefaultUavDataComponent(req, res) {
 
         return partnumber
@@ -102,7 +227,7 @@ module.exports = {
 
                 var generate_serials = () => {
                     var serials = [];
-                    for (let i = 0; i < components.fcs.length; i++) {
+                    for (let i = 0; i < component.fcs.length; i++) {
                         components.fcs[i].serial_number = generateSerialNumber.generate('F');
                         serials.push({
                             serial_number: components.fcs[i].serial_number,
@@ -110,7 +235,7 @@ module.exports = {
                         });
                     }
 
-                    for (let i = 0; i < components.batteries.length; i++) {
+                    for (let i = 0; i < component.batteries.length; i++) {
                         components.batteries[i].serial_number = generateSerialNumber.generate('B');
                         serials.push({
                             serial_number: components.batteries[i].serial_number,
@@ -118,7 +243,7 @@ module.exports = {
                         });
                     }
 
-                    for (let i = 0; i < components.components.length; i++) {
+                    for (let i = 0; i < component.components.length; i++) {
                         components.components[i].bldc.serial_number = generateSerialNumber.generate('M');
                         serials.push({
                             serial_number: components.components[i].bldc.serial_number,
