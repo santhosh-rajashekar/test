@@ -35,6 +35,9 @@ const sendMailer = mailer.extend(app, {
 const DIR_UPLOADS = './uploads/';
 const DIR_UPLOADED = './uploaded/';
 
+const INTERVAL_DAYS = 30;
+const INTERVAL_TYPE = 'days';
+
 const storage = multer.diskStorage({
     destination: function(req, file, cb) {
         cb(null, DIR_UPLOADS);
@@ -480,7 +483,7 @@ module.exports = {
 
     getArchivedFilename(req, res) {
 
-        var date = moment().subtract(30, 'days').toDate();
+        var date = moment().subtract(INTERVAL_DAYS, INTERVAL_TYPE).toDate();
         console.log(date);
 
         flights.findAll({
@@ -505,8 +508,7 @@ module.exports = {
 
     getArchivedFileDetails(req, res) {
 
-        var date = moment().subtract(2, 'minutes').toDate();
-        console.log(date);
+        var date = moment().subtract(INTERVAL_DAYS, INTERVAL_TYPE).toDate();
 
         function archived_file(filename, flight_id, uav_id, manufacturer_name, manufacturer_model) {
             this.filename = filename;
@@ -554,7 +556,7 @@ module.exports = {
             where: {
                 is_archived: true,
                 updatedAt: {
-                    [Op.lt]: moment().subtract(2, 'minutes').toDate(),
+                    [Op.lt]: moment().subtract(INTERVAL_DAYS, INTERVAL_TYPE).toDate(),
                 }
             }
         }).then(flights => {
@@ -572,7 +574,7 @@ module.exports = {
             where: {
                 is_archived: true,
                 createdAt: {
-                    [Op.lt]: moment().subtract(2, 'minutes').toDate(),
+                    [Op.lt]: moment().subtract(INTERVAL_DAYS, INTERVAL_TYPE).toDate(),
                 }
             }
         }).then(flights => {
