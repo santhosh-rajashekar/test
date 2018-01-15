@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 const flights = require('../models').flights;
 const archived_flights = require('../models').archived_flights;
@@ -34,6 +34,9 @@ const sendMailer = mailer.extend(app, {
 
 const DIR_UPLOADS = './uploads/';
 const DIR_UPLOADED = './uploaded/';
+
+const INTERVAL_DAYS = 30;
+const INTERVAL_TYPE = 'days';
 
 const storage = multer.diskStorage({
     destination: function(req, file, cb) {
@@ -116,7 +119,7 @@ module.exports = {
                     fs.renameSync(DIR_UPLOADS + req.file.filename, _destination_dir + _destination_filename);
                     fs.accessSync(_destination_dir + _destination_filename, fs.constants.R_OK | fs.constants.W_OK);
 
-                    res.status(200).send('File ' + req.file.originalname + ' (' + _destination_filename + ') was uploaded successfully!');
+                    res.status(200).send({"message": 'File ' + req.file.originalname + ' (' + _destination_filename + ') was uploaded successfully!'});
                 } catch (error) {
                     res.status(500).send(error);
                 }
@@ -460,8 +463,6 @@ module.exports = {
                 }
             })
             .then(flights => {
-
-                console.log(flights);
                 if (flights > 0) {
                     return res.status(200).send({
                         isDuplicate: true
@@ -474,13 +475,13 @@ module.exports = {
 
             }).catch(error => {
                 console.log(error);
-                res.status(500).send(error);
+                res.status(400).send(error);
             });
     },
 
     getArchivedFilename(req, res) {
 
-        var date = moment().subtract(30, 'days').toDate();
+        var date = moment().subtract(INTERVAL_DAYS, INTERVAL_TYPE).toDate();
         console.log(date);
 
         flights.findAll({
@@ -505,8 +506,15 @@ module.exports = {
 
     getArchivedFileDetails(req, res) {
 
+<<<<<<< HEAD
         var date = moment().subtract(30, 'days').toDate();
         console.log(date);
+||||||| merged common ancestors
+        var date = moment().subtract(2, 'minutes').toDate();
+        console.log(date);
+=======
+        var date = moment().subtract(INTERVAL_DAYS, INTERVAL_TYPE).toDate();
+>>>>>>> c090150ed0c92c0ce97dbbac08f3545bf2038f3c
 
         function archived_file(filename, flight_id, uav_id, manufacturer_name, manufacturer_model) {
             this.filename = filename;
@@ -556,7 +564,13 @@ module.exports = {
             where: {
                 is_archived: true,
                 updatedAt: {
+<<<<<<< HEAD
                     [Op.lt]: date,
+||||||| merged common ancestors
+                    [Op.lt]: moment().subtract(2, 'minutes').toDate(),
+=======
+                    [Op.lt]: moment().subtract(INTERVAL_DAYS, INTERVAL_TYPE).toDate(),
+>>>>>>> c090150ed0c92c0ce97dbbac08f3545bf2038f3c
                 }
             }
         }).then(flights => {
@@ -568,6 +582,44 @@ module.exports = {
         });
     },
 
+<<<<<<< HEAD
+||||||| merged common ancestors
+    deleteArchivedFlights(req, res) {
+
+        flights.destroy({
+            where: {
+                is_archived: true,
+                createdAt: {
+                    [Op.lt]: moment().subtract(2, 'minutes').toDate(),
+                }
+            }
+        }).then(flights => {
+            res.status(200).send('deleted successfully');
+        }).catch(error => {
+            console.log(error);
+            res.status(500).send(error);
+        });
+    },
+
+=======
+    deleteArchivedFlights(req, res) {
+
+        flights.destroy({
+            where: {
+                is_archived: true,
+                createdAt: {
+                    [Op.lt]: moment().subtract(INTERVAL_DAYS, INTERVAL_TYPE).toDate(),
+                }
+            }
+        }).then(flights => {
+            res.status(200).send('deleted successfully');
+        }).catch(error => {
+            console.log(error);
+            res.status(500).send(error);
+        });
+    },
+
+>>>>>>> c090150ed0c92c0ce97dbbac08f3545bf2038f3c
     getFlightsCountAndLastUpdatedById(req, res) {
 
         flights.findAll({
@@ -609,8 +661,6 @@ module.exports = {
                 ]
             })
             .then(function(flight) {
-                console.log('flight');
-                console.log(flight);
 
                 if (flight && flight.length) {
                     ids = _.map(flight, function(flig) {
@@ -619,7 +669,6 @@ module.exports = {
 
                     sequelize.query("SELECT uav_id, data->>'status' AS lastFlightStatus FROM flights WHERE flights.id IN (:flight_ids);", { replacements: { flight_ids: ids }, type: Sequelize.QueryTypes.SELECT })
                         .then(results => {
-                            console.log(results);
                             res.status(200).send(JSON.stringify(results));
                         })
                 } else {

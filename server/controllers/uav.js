@@ -192,7 +192,7 @@ module.exports = {
             .then(datauavs => {
 
                 if (!datauavs) {
-                    return res.status(404).send({
+                    return res.status(400).send({
                         message: 'Uav Not Found',
                     });
                 }
@@ -235,7 +235,7 @@ module.exports = {
 
                         return res.status(200).send(datauavs);
                     } else {
-                        return res.status(404).send({
+                        return res.status(400).send({
                             message: 'Uav Not Found',
                         });
                     }
