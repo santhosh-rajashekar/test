@@ -505,7 +505,7 @@ module.exports = {
 
     getArchivedFileDetails(req, res) {
 
-        var date = moment().subtract(2, 'minutes').toDate();
+        var date = moment().subtract(30, 'days').toDate();
         console.log(date);
 
         function archived_file(filename, flight_id, uav_id, manufacturer_name, manufacturer_model) {
@@ -550,32 +550,17 @@ module.exports = {
 
     deleteArchivedFlights(req, res) {
 
+        var date = moment().subtract(30, 'days').toDate();
+
         flights.destroy({
             where: {
                 is_archived: true,
                 updatedAt: {
-                    [Op.lt]: moment().subtract(2, 'minutes').toDate(),
+                    [Op.lt]: date,
                 }
             }
         }).then(flights => {
             console.log(JSON.parse(flights));
-            res.status(200).send('deleted successfully');
-        }).catch(error => {
-            console.log(error);
-            res.status(500).send(error);
-        });
-    },
-
-    deleteArchivedFlights(req, res) {
-
-        flights.destroy({
-            where: {
-                is_archived: true,
-                createdAt: {
-                    [Op.lt]: moment().subtract(2, 'minutes').toDate(),
-                }
-            }
-        }).then(flights => {
             res.status(200).send('deleted successfully');
         }).catch(error => {
             console.log(error);
