@@ -635,7 +635,7 @@ module.exports = {
         let ids = req.body.flight_ids;
 
         try {
-            sequelize.query("SELECT id, uav_id, user_id, filename, filesize, file_md5_hash, metadata FROM flights WHERE flights.id IN (:flight_ids);", { replacements: { flight_ids: ids }, type: Sequelize.QueryTypes.SELECT })
+            sequelize.query("SELECT id AS flight_id, uav_id, user_id, filename, filesize, file_md5_hash, metadata FROM flights WHERE flights.id IN (:flight_ids);", { replacements: { flight_ids: ids }, type: Sequelize.QueryTypes.SELECT })
                 .then(results => {
                     res.status(200).send(JSON.stringify(results));
                 })
