@@ -4,10 +4,9 @@ var path = require("path");
 const logger = require('morgan');
 const bodyParser = require('body-parser');
 const debug = require('debug')('expressdebug:server');
-
 const env = process.env.NODE_ENV || 'development';
-
 const app = express();
+
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));

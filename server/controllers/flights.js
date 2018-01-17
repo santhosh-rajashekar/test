@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 const flights = require('../models').flights;
 const archived_flights = require('../models').archived_flights;
@@ -34,6 +34,9 @@ const sendMailer = mailer.extend(app, {
 
 const DIR_UPLOADS = './uploads/';
 const DIR_UPLOADED = './uploaded/';
+
+const INTERVAL_DAYS = 30;
+const INTERVAL_TYPE = 'days';
 
 const storage = multer.diskStorage({
     destination: function(req, file, cb) {
@@ -116,7 +119,7 @@ module.exports = {
                     fs.renameSync(DIR_UPLOADS + req.file.filename, _destination_dir + _destination_filename);
                     fs.accessSync(_destination_dir + _destination_filename, fs.constants.R_OK | fs.constants.W_OK);
 
-                    res.status(200).send('File ' + req.file.originalname + ' (' + _destination_filename + ') was uploaded successfully!');
+                    res.status(200).send({ "message": 'File ' + req.file.originalname + ' (' + _destination_filename + ') was uploaded successfully!' });
                 } catch (error) {
                     res.status(500).send(error);
                 }
@@ -460,8 +463,6 @@ module.exports = {
                 }
             })
             .then(flights => {
-
-                console.log(flights);
                 if (flights > 0) {
                     return res.status(200).send({
                         isDuplicate: true
@@ -474,13 +475,13 @@ module.exports = {
 
             }).catch(error => {
                 console.log(error);
-                res.status(500).send(error);
+                res.status(400).send(error);
             });
     },
 
     getArchivedFilename(req, res) {
 
-        var date = moment().subtract(30, 'days').toDate();
+        var date = moment().subtract(INTERVAL_DAYS, INTERVAL_TYPE).toDate();
         console.log(date);
 
         flights.findAll({
@@ -505,7 +506,7 @@ module.exports = {
 
     getArchivedFileDetails(req, res) {
 
-        var date = moment().subtract(2, 'minutes').toDate();
+        var date = moment().subtract(30, 'days').toDate();
         console.log(date);
 
         function archived_file(filename, flight_id, uav_id, manufacturer_name, manufacturer_model) {
@@ -550,32 +551,17 @@ module.exports = {
 
     deleteArchivedFlights(req, res) {
 
+        var date = moment().subtract(30, 'days').toDate();
+
         flights.destroy({
             where: {
                 is_archived: true,
                 updatedAt: {
-                    [Op.lt]: moment().subtract(2, 'minutes').toDate(),
+                    [Op.lt]: date,
                 }
             }
         }).then(flights => {
             console.log(JSON.parse(flights));
-            res.status(200).send('deleted successfully');
-        }).catch(error => {
-            console.log(error);
-            res.status(500).send(error);
-        });
-    },
-
-    deleteArchivedFlights(req, res) {
-
-        flights.destroy({
-            where: {
-                is_archived: true,
-                createdAt: {
-                    [Op.lt]: moment().subtract(2, 'minutes').toDate(),
-                }
-            }
-        }).then(flights => {
             res.status(200).send('deleted successfully');
         }).catch(error => {
             console.log(error);
@@ -624,8 +610,6 @@ module.exports = {
                 ]
             })
             .then(function(flight) {
-                console.log('flight');
-                console.log(flight);
 
                 if (flight && flight.length) {
                     ids = _.map(flight, function(flig) {
@@ -634,7 +618,6 @@ module.exports = {
 
                     sequelize.query("SELECT uav_id, data->>'status' AS lastFlightStatus FROM flights WHERE flights.id IN (:flight_ids);", { replacements: { flight_ids: ids }, type: Sequelize.QueryTypes.SELECT })
                         .then(results => {
-                            console.log(results);
                             res.status(200).send(JSON.stringify(results));
                         })
                 } else {
@@ -644,6 +627,66 @@ module.exports = {
             .catch(error => {
                 console.log(error);
                 res.status(400).send(error);
+            });
+    },
+
+    getmetadata(req, res) {
+
+        let ids = req.body.flight_ids;
+
+        try {
+            sequelize.query("SELECT id, uav_id, user_id, filename, filesize, file_md5_hash, metadata FROM flights WHERE flights.id IN (:flight_ids);", { replacements: { flight_ids: ids }, type: Sequelize.QueryTypes.SELECT })
+                .then(results => {
+                    res.status(200).send(JSON.stringify(results));
+                })
+                .catch(error => {
+                    console.log(error);
+                    res.status(400).send(error);
+                });
+        } catch (error) {
+            console.log(error);
+            res.status(400).send(error);
+        }
+    },
+
+    updateUntraceableData(req, res) {
+
+        var flight_id = req.body.flight_id;
+        var untraceable_data = req.body.data_untraceable;
+
+        //TODO : update the untraceable data in the archived_flights table
+        //TODO : remove the existing columns and create a new column
+
+        return true;
+    },
+
+    updateAnalysisResult(req, res) {
+
+        var flight_id = req.body.flight_id;
+        var data_to_update = req.body.data;
+
+        return flights.findById(flight_id)
+            .then(flight => {
+                if (!flight) {
+                    res.status(404).send('Flight not found');
+                    return;
+                }
+
+                return flight.update({
+                        data: data_to_update
+                    })
+                    .then(flight => {
+                        //TODO : updateUntraceableData that will be passed from analysis module
+                        return res.status(200).send('flight update successully');
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        res.status(500).send(error);
+                    });
+            })
+            .catch(error => {
+                console.log(error);
+                res.status(500).send(error);
             });
     },
 
