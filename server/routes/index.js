@@ -3,6 +3,7 @@ const analyticsController = require('../controllers').analytics;
 const uavController = require('../controllers').uav;
 const uavhistoryController = require('../controllers').uavhistory;
 const partnumberController = require('../controllers').partnumber;
+const progressManager = require('../../sockets/base');
 const env = process.env.NODE_ENV || 'development';
 const urlPrefix = '';
 
@@ -2539,7 +2540,7 @@ Content-Type: application/octet-stream
   -H 'Cache-Control: no-cache'
      */
     app.get(urlPrefix + '/api/datauavs', uavController.list);
-    
+
     /**
      * @api {post} /api/datauavs/get-component Get all components details by uav ids
      * @apiName Get all component details by uav ids
@@ -4274,6 +4275,11 @@ Content-Type: application/octet-stream
     app.get(urlPrefix + '/api/partnumbers', partnumberController.list);
 
     app.post(urlPrefix + '/api/create-components', partnumberController.createDefaultUavDataComponent);
+
+
+    app.post(urlPrefix + '/api/flights/getmetadata', flightController.getmetadata);
+    app.post(urlPrefix + '/api/flights/updateAnalysisResult', flightController.updateAnalysisResult);
+    app.post(urlPrefix + '/api/flights/notifyProgress', progressManager.notifyProgress);
 
     app.get(urlPrefix + '/api/analytics/getTotalFlightHoursBySN/:serial_number', analyticsController.getTotalFlightHoursBySN);
     app.get(urlPrefix + '/api/analytics/getAllFlightLocationsBySN/:serial_number', analyticsController.getAllFlightLocationsBySN);

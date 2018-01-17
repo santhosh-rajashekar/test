@@ -119,7 +119,7 @@ module.exports = {
                     fs.renameSync(DIR_UPLOADS + req.file.filename, _destination_dir + _destination_filename);
                     fs.accessSync(_destination_dir + _destination_filename, fs.constants.R_OK | fs.constants.W_OK);
 
-                    res.status(200).send({"message": 'File ' + req.file.originalname + ' (' + _destination_filename + ') was uploaded successfully!'});
+                    res.status(200).send({ "message": 'File ' + req.file.originalname + ' (' + _destination_filename + ') was uploaded successfully!' });
                 } catch (error) {
                     res.status(500).send(error);
                 }
@@ -506,15 +506,8 @@ module.exports = {
 
     getArchivedFileDetails(req, res) {
 
-<<<<<<< HEAD
         var date = moment().subtract(30, 'days').toDate();
         console.log(date);
-||||||| merged common ancestors
-        var date = moment().subtract(2, 'minutes').toDate();
-        console.log(date);
-=======
-        var date = moment().subtract(INTERVAL_DAYS, INTERVAL_TYPE).toDate();
->>>>>>> c090150ed0c92c0ce97dbbac08f3545bf2038f3c
 
         function archived_file(filename, flight_id, uav_id, manufacturer_name, manufacturer_model) {
             this.filename = filename;
@@ -564,13 +557,7 @@ module.exports = {
             where: {
                 is_archived: true,
                 updatedAt: {
-<<<<<<< HEAD
                     [Op.lt]: date,
-||||||| merged common ancestors
-                    [Op.lt]: moment().subtract(2, 'minutes').toDate(),
-=======
-                    [Op.lt]: moment().subtract(INTERVAL_DAYS, INTERVAL_TYPE).toDate(),
->>>>>>> c090150ed0c92c0ce97dbbac08f3545bf2038f3c
                 }
             }
         }).then(flights => {
@@ -582,44 +569,6 @@ module.exports = {
         });
     },
 
-<<<<<<< HEAD
-||||||| merged common ancestors
-    deleteArchivedFlights(req, res) {
-
-        flights.destroy({
-            where: {
-                is_archived: true,
-                createdAt: {
-                    [Op.lt]: moment().subtract(2, 'minutes').toDate(),
-                }
-            }
-        }).then(flights => {
-            res.status(200).send('deleted successfully');
-        }).catch(error => {
-            console.log(error);
-            res.status(500).send(error);
-        });
-    },
-
-=======
-    deleteArchivedFlights(req, res) {
-
-        flights.destroy({
-            where: {
-                is_archived: true,
-                createdAt: {
-                    [Op.lt]: moment().subtract(INTERVAL_DAYS, INTERVAL_TYPE).toDate(),
-                }
-            }
-        }).then(flights => {
-            res.status(200).send('deleted successfully');
-        }).catch(error => {
-            console.log(error);
-            res.status(500).send(error);
-        });
-    },
-
->>>>>>> c090150ed0c92c0ce97dbbac08f3545bf2038f3c
     getFlightsCountAndLastUpdatedById(req, res) {
 
         flights.findAll({
@@ -678,6 +627,66 @@ module.exports = {
             .catch(error => {
                 console.log(error);
                 res.status(400).send(error);
+            });
+    },
+
+    getmetadata(req, res) {
+
+        let ids = req.body.flight_ids;
+
+        try {
+            sequelize.query("SELECT id, uav_id, user_id, filename, filesize, file_md5_hash, metadata FROM flights WHERE flights.id IN (:flight_ids);", { replacements: { flight_ids: ids }, type: Sequelize.QueryTypes.SELECT })
+                .then(results => {
+                    res.status(200).send(JSON.stringify(results));
+                })
+                .catch(error => {
+                    console.log(error);
+                    res.status(400).send(error);
+                });
+        } catch (error) {
+            console.log(error);
+            res.status(400).send(error);
+        }
+    },
+
+    updateUntraceableData(req, res) {
+
+        var flight_id = req.body.flight_id;
+        var untraceable_data = req.body.data_untraceable;
+
+        //TODO : update the untraceable data in the archived_flights table
+        //TODO : remove the existing columns and create a new column
+
+        return true;
+    },
+
+    updateAnalysisResult(req, res) {
+
+        var flight_id = req.body.flight_id;
+        var data_to_update = req.body.data;
+
+        return flights.findById(flight_id)
+            .then(flight => {
+                if (!flight) {
+                    res.status(404).send('Flight not found');
+                    return;
+                }
+
+                return flight.update({
+                        data: data_to_update
+                    })
+                    .then(flight => {
+                        //TODO : updateUntraceableData that will be passed from analysis module
+                        return res.status(200).send('flight update successully');
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        res.status(500).send(error);
+                    });
+            })
+            .catch(error => {
+                console.log(error);
+                res.status(500).send(error);
             });
     },
 

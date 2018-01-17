@@ -227,7 +227,7 @@ module.exports = {
 
                 var generate_serials = () => {
                     var serials = [];
-                    for (let i = 0; i < component.fcs.length; i++) {
+                    for (let i = 0; i < components.fcs.length; i++) {
                         components.fcs[i].serial_number = generateSerialNumber.generate('F');
                         serials.push({
                             serial_number: components.fcs[i].serial_number,
@@ -235,7 +235,7 @@ module.exports = {
                         });
                     }
 
-                    for (let i = 0; i < component.batteries.length; i++) {
+                    for (let i = 0; i < components.batteries.length; i++) {
                         components.batteries[i].serial_number = generateSerialNumber.generate('B');
                         serials.push({
                             serial_number: components.batteries[i].serial_number,
@@ -243,7 +243,7 @@ module.exports = {
                         });
                     }
 
-                    for (let i = 0; i < component.components.length; i++) {
+                    for (let i = 0; i < components.components.length; i++) {
                         components.components[i].bldc.serial_number = generateSerialNumber.generate('M');
                         serials.push({
                             serial_number: components.components[i].bldc.serial_number,
