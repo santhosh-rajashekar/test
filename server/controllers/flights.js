@@ -663,6 +663,7 @@ module.exports = {
     updateAnalysisResult(req, res) {
 
         var flight_id = req.body.flight_id;
+        var result_code = req.body.result_code;
         var data_to_update = req.body.data;
 
         return flights.findById(flight_id)
@@ -688,6 +689,15 @@ module.exports = {
                 console.log(error);
                 res.status(500).send(error);
             });
+    },
+
+    updateDataConversionFailure(req, res) {
+
+        var flight_id = req.body.flight_id;
+        var result_code = req.body.result_code;
+        var description = req.body.description;
+        //TODO : communicate to front end and update the database, status
+        res.status(200).send('ok');
     },
 
 }
