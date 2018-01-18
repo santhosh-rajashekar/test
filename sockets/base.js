@@ -104,11 +104,13 @@ module.exports = {
 
                 if (socket.id == clientToNotify.socket_id) {
                     socket.emit('progress', req.body);
+                    res.status(200).send('ok');
                     break;
                 }
             }
+        } else {
+            res.status(500).send('nok, client not found to receive the progress status');
         }
 
-        res.status(200).send('ok');
     }
 }

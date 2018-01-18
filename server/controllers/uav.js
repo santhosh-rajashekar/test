@@ -71,6 +71,7 @@ module.exports = {
                 const resObj = datauavs.map(datauav => {
                     let _last_status = 0;
                     let _last_update = null;
+                    let _last_flight_id = null;
                     let _uploaded_flights = 0;
 
                     if (datauav.flights.length) {
@@ -89,6 +90,8 @@ module.exports = {
                         if (_last_flight.updatedAt) {
                             _last_update = _last_flight.updatedAt;
                         }
+
+                        _last_flight_id = _last_flight.id;
                     }
 
                     if (datauav.data && datauav.data.history) {
@@ -117,6 +120,7 @@ module.exports = {
                             }, 0),
                             last_update: _last_update,
                             status: _last_status,
+                            status_flight_id: _last_flight_id,
                             uploaded_flights: _uploaded_flights
                         }
                     });

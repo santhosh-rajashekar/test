@@ -4276,8 +4276,8 @@ Content-Type: application/octet-stream
 
     app.post(urlPrefix + '/api/create-components', partnumberController.createDefaultUavDataComponent);
 
-
     app.post(urlPrefix + '/api/flights/getmetadata', flightController.getmetadata);
+    app.post(urlPrefix + '/api/flights/getFlightlogDetails', flightController.getFlightlogDetails);
     app.post(urlPrefix + '/api/flights/updateAnalysisResult', flightController.updateAnalysisResult);
     app.post(urlPrefix + '/api/flights/updateDataConversionFailure', flightController.updateDataConversionFailure);
     app.post(urlPrefix + '/api/flights/notifyProgress', progressManager.notifyProgress);

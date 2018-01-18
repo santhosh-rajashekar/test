@@ -118,10 +118,9 @@ module.exports = {
                     console.log("\n\n _destination_filename:", _destination_filename);
                     fs.renameSync(DIR_UPLOADS + req.file.filename, _destination_dir + _destination_filename);
                     fs.accessSync(_destination_dir + _destination_filename, fs.constants.R_OK | fs.constants.W_OK);
-
-                    res.status(200).send({ "message": 'File ' + req.file.originalname + ' (' + _destination_filename + ') was uploaded successfully!' });
+                    return { 'result': true };
                 } catch (error) {
-                    res.status(500).send(error);
+                    return { 'result': false, 'message': error };
                 }
             };
 
@@ -157,25 +156,33 @@ module.exports = {
                             .then(flight => {
                                 console.log('destination filename updated successfully');
 
-                                _create_final_file(req, res, flights, _destination_filename);
+                                var data = _create_final_file(req, res, flights, _destination_filename);
 
-                                archived_flights.create({
-                                    uav_id: body_data.uavid
-                                }).then(archived_flights => {
-                                    console.log('entry created successfully in archived_flights table');
-                                }).catch(error => {
-                                    console.log(error);
-                                    console.log('error in creating row in the archived_flights table');
-                                });
+                                if (data.result) {
+                                    archived_flights.create({
+                                        uav_id: body_data.uavid
+                                    }).then(archived_flights => {
+                                        console.log('entry created successfully in archived_flights table');
+                                        res.status(200).send({ 'result': true, 'flight_id': flights.id, 'destination filename': _destination_filename });
+                                    }).catch(error => {
+                                        console.log(error);
+                                        console.log('error in creating row in the archived_flights table');
+                                        res.status(200).send({ 'result': false, 'message': 'Error in updating the destination filename', 'flight_id': flights.id, 'destination filename': _destination_filename });
+                                    });
+                                } else {
+                                    res.status(200).send({ 'result': false, 'message': data.message, 'flight_id': flights.id, 'destination filename': _destination_filename });
+                                }
+
                             })
                             .catch(error => {
                                 console.log(error);
                                 console.log('Error in updating the destination filename');
+                                res.status(200).send({ 'result': false, 'message': 'Error in updating the destination filename', 'flight_id': flights.id, 'destination filename': _destination_filename });
                             });
                     })
                     .catch(error => {
                         console.log(error);
-                        res.status(500).send(error);
+                        res.status(200).send({ 'result': false, 'message': error, 'flight_id': null, 'destination filename': _destination_filename });
                     });
             };
 
@@ -636,6 +643,48 @@ module.exports = {
 
         try {
             sequelize.query("SELECT id AS flight_id, uav_id, user_id, filename, filesize, file_md5_hash, metadata FROM flights WHERE flights.id IN (:flight_ids);", { replacements: { flight_ids: ids }, type: Sequelize.QueryTypes.SELECT })
+                .then(results => {
+                    res.status(200).send(JSON.stringify(results));
+                })
+                .catch(error => {
+                    console.log(error);
+                    res.status(400).send(error);
+                });
+        } catch (error) {
+            console.log(error);
+            res.status(400).send(error);
+        }
+    },
+
+    getFlightlogDetails(req, res) {
+
+        let ids = req.body.flight_ids;
+        let fields = req.body.attributes;
+
+        let possibleFileds = ['id', 'uav_id', 'user_id', 'filename', 'filesize', 'file_md5_hash', 'metadata', 'data', 'createdAt', 'updatedAt'];
+        let selectString = "SELECT id AS flight_id";
+
+        if (fields && fields.length) {
+
+            for (let i = 0; i < fields.length; i++) {
+                if (!possibleFileds.includes(fields[i])) {
+                    res.status(400).send("Invalid attribute " + fields[i] + " requested for the Flight log");
+                }
+            }
+
+            for (let i = 0; i < fields.length; i++) {
+                if (fields[i] != 'id') {
+                    selectString += ',' + fields[i];
+                }
+            }
+            selectString += " FROM flights WHERE flights.id IN (:flight_ids);";
+
+        } else {
+            selectString = "SELECT id AS flight_id, uav_id, user_id, filename, filesize, file_md5_hash, metadata FROM flights WHERE flights.id IN (:flight_ids);";
+        }
+
+        try {
+            sequelize.query(selectString, { replacements: { flight_ids: ids }, type: Sequelize.QueryTypes.SELECT })
                 .then(results => {
                     res.status(200).send(JSON.stringify(results));
                 })
