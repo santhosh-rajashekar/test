@@ -1,8 +1,129 @@
 'use strict';
 var io = require('socket.io')();
+const flights = require('../server/models').flights;
 var clients = [];
-// var timerId = null;
 var sockets = new Set();
+
+
+var notifyClient = function(req, res, flight_id, uav_id, user_id, updateFlight) {
+
+    var clientsToNotify = getClientsToNotify(user_id);
+    var socketsToNotify = getSockets(clientsToNotify);
+
+    if (socketsToNotify && socketsToNotify.length > 0) {
+
+        if (updateFlight) {
+            updateProgressedStateInFlight(req, res, flight_id);
+        }
+
+        for (let i = 0; i < socketsToNotify.length; i++) {
+            console.log('socketsToNotify called for ' + socketsToNotify[i].id);
+            socketsToNotify[i].emit('progress', req.body);
+        }
+
+
+
+        res.status(200).send('ok');
+    } else {
+        res.status(500).send('nok, client not found to receive the progress status');
+    }
+};
+
+var notifyOtherClients = function(req, res, flight_id, uav_id, user_id) {
+
+    flights.findAll({
+            attributes: ['user_id'],
+            where: {
+                id: flight_id,
+                uav_id: uav_id
+            }
+        })
+        .then(flights => {
+            if (flights && flights.length > 0) {
+                for (let i = 0; i < flights.length; i++) {
+
+                    if (user_id != flights[0].user_id) {
+                        var userid = flights[0].user_id;
+                        notifyClient(req, res, flight_id, uav_id, userid, false);
+                    }
+                }
+            }
+        }).catch(error => {
+            console.log('Error while notifying the other clients ' + error);
+        });
+};
+
+var updateProgressedStateInFlight = function(req, res, flight_id) {
+
+    //remove the redundancy (user_id, uav_id, flight_id)
+    //TODO : update / notify via emial / monitoring system when there is any error scenarios
+    var state_received = req.body;
+    var value = {
+        "module_name": state_received.module_name,
+        "title": state_received.title,
+        "progress": state_received.progress,
+        "progress_state": state_received.process_state,
+    };
+
+    flights.findById(flight_id)
+        .then(flight => {
+            try {
+                if (!flight) {
+                    console.log('No flight found with the flight id ' + flight_id + ' to update the progress state');
+                    return;
+                }
+
+                flight.processed_state = value;
+
+                flight.update({
+                        processed_state: value
+                    })
+                    .then(flight => {
+                        console.log('Updated the progress_state for the flight_id ' + flight_id);
+                    })
+                    .catch(error => {
+                        console.log('Error while updateding the progress_state for the flight_id' + flight_id + ' Error ' + error);
+                    });
+            } catch (error) {
+                console.log(error);
+                res.status(500).send(error);
+            }
+        })
+        .catch(error => {
+            console.log('Error while updateding the progress_state for the flight_id' + flight_id + ' Error ' + error);
+        });
+};
+
+var getClientsToNotify = function(user_id) {
+
+    var clientsToNotify = [];
+
+    for (var i = 0, len = clients.length; i < len; ++i) {
+        var c = clients[i];
+
+        if (c.user_id == user_id) {
+            clientsToNotify.push(c);
+        }
+    }
+    return clientsToNotify;
+};
+
+var getSockets = function(clientsToNotify) {
+
+    var socketsToNotify = [];
+
+    if (clientsToNotify && clientsToNotify.length > 0) {
+        for (let i = 0; i < clientsToNotify.length; i++) {
+            for (const socket of sockets) {
+                if (socket.id == clientsToNotify[i].socket_id) {
+                    socketsToNotify.push(socket);
+                }
+            }
+        }
+    }
+
+    return socketsToNotify;
+};
 
 module.exports = {
 
@@ -13,18 +134,12 @@ module.exports = {
             console.log(`Socket ${socket.id} added`);
             sockets.add(socket);
 
-            // if (!timerId) {
-            //     startTimer();
-            // }
-
             socket.on('storeClientInfo', (data) => {
 
                 console.log(`storeClientInfo called: ${data.user_id}`);
 
                 var clientInfo = new Object();
                 clientInfo.user_id = data.user_id;
-                clientInfo.uav_id = data.uav_id;
-                clientInfo.flight_id = data.flight_id;
                 clientInfo.socket_id = socket.id;
                 clients.push(clientInfo);
             });
@@ -42,27 +157,6 @@ module.exports = {
                 }
                 console.log(`Remaining sockets: ${clients.length}`);
             });
-
-            // function startTimer() {
-            //     //Simulate stock data received by the server that needs 
-            //     //to be pushed to clients
-            //     timerId = setInterval(() => {
-            //         if (!sockets.size) {
-            //             clearInterval(timerId);
-            //             timerId = null;
-            //             console.log(`Timer stopped`);
-            //         }
-            //         let value = ((Math.random() * 50) + 1).toFixed(2);
-            //         //See comment above about using a "room" to emit to an entire
-            //         //group of sockets if appropriate for your scenario
-            //         //This example tracks each socket and emits to each one
-            //         for (const s of sockets) {
-            //             console.log(`Emitting value: ${value}`);
-            //             s.emit('progress', { data: value });
-            //         }
-
-            //     }, 1000);
-            // }
         });
 
         return io;
@@ -79,38 +173,39 @@ module.exports = {
         var progress = req.body.progress;
         var process_state = req.body.process_state;
 
-        var clientToNotify = null;
-
-        if (!user_id || !uav_id || !flight_id || !progress || !process_state || !title) {
-            res.status(500).send('Missing mandatory parameters (user_id, uav_id, flight_id, progress, process_state, title)');
+        if (!flight_id || !process_state || !title || progress == null) {
+            res.status(500).send('Missing mandatory parameters (flight_id, progress, process_state, title)');
         }
 
-        for (var i = 0, len = clients.length; i < len; ++i) {
-            var c = clients[i];
-
-            // if (c.user_id == user_id && c.uav_id == uav_id && c.flight_id == flight_id) {
-            //     clientToNotify = c;
-            //     break;
-            // }
-
-            if (c.user_id == user_id) {
-                clientToNotify = c;
-                break;
-            }
+        if (progress < 0 || progress > 100) {
+            res.status(500).send('Invalid value for the progress parameter, value should be between 0 and 100');
         }
 
-        if (clientToNotify) {
-            for (const socket of sockets) {
-
-                if (socket.id == clientToNotify.socket_id) {
-                    socket.emit('progress', req.body);
-                    res.status(200).send('ok');
-                    break;
-                }
-            }
+        if (user_id && uav_id) {
+            //best case scenario, progress is notified with all the required info
+            notifyClient(req, res, flight_id, uav_id, user_id, true);
+            notifyOtherClients(req, res, flight_id, uav_id, user_id);
         } else {
-            res.status(500).send('nok, client not found to receive the progress status');
+            //not so good scenario, progress is notified but not enough information to track and inform the right client
+            flights.findAll({
+                    attributes: ['id', 'user_id', 'uav_id'],
+                    where: {
+                        id: flight_id
+                    }
+                })
+                .then(flights => {
+                    if (flights && flights.length < 1) {
+                        var message = 'NOK, No flight found with flight id' + flight_id;
+                        return res.status(200).send(message);
+                    } else if (flights.length == 1) {
+                        var user_id = flights[0].user_id;
+                        var uav_id = flights[0].uav_id;
+                        notifyClient(req, res, flight_id, uav_id, user_id, true);
+                        notifyOtherClients(req, res, flight_id, uav_id, user_id);
+                    }
+                }).catch(error => {
+                    return res.status(200).send(error);
+                });
         }
-
     }
 }

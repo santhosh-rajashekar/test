@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
         file_md5_hash: DataTypes.STRING,
         filesize: DataTypes.BIGINT,
         user_id: DataTypes.INTEGER,
+        processed_state: DataTypes.JSONB
     });
 
     flights.associate = (models) => {

@@ -722,6 +722,8 @@ module.exports = {
                     return;
                 }
 
+                flight.data = data_to_update;
+
                 return flight.update({
                         data: data_to_update
                     })
