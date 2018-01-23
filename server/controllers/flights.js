@@ -160,7 +160,8 @@ module.exports = {
 
                                 if (data.result) {
                                     archived_flights.create({
-                                        uav_id: body_data.uavid
+                                        uav_id: body_data.uavid,
+                                        flight_id: flights.id
                                     }).then(archived_flights => {
                                         console.log('entry created successfully in archived_flights table');
                                         res.status(200).send({ 'result': true, 'flight_id': flights.id, 'destination filename': _destination_filename });
@@ -702,9 +703,33 @@ module.exports = {
 
         var flight_id = req.body.flight_id;
         var untraceable_data = req.body.data_untraceable;
+        var untraceable_metadata = req.body.metadata_untraceable;
 
-        //TODO : update the untraceable data in the archived_flights table
-        //TODO : remove the existing columns and create a new column
+        return archived_flights.findById(flight_id)
+            .then(flight => {
+                if (!flight) {
+                    res.status(404).send('Flight not found with the id : ' + flight_id);
+                    return;
+                }
+
+                flight.data = data_to_update;
+
+                return flight.update({
+                        data: data_to_update
+                    })
+                    .then(flight => {
+                        //TODO : updateUntraceableData that will be passed from analysis module
+                        return res.status(200).send('flight update successully');
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        res.status(500).send(error);
+                    });
+            })
+            .catch(error => {
+                console.log(error);
+                res.status(500).send(error);
+            });
 
         return true;
     },
