@@ -718,7 +718,7 @@ module.exports = {
         return flights.findById(flight_id)
             .then(flight => {
                 if (!flight) {
-                    res.status(404).send('Flight not found');
+                    res.status(404).send('Flight not found with the id : ' + flight_id);
                     return;
                 }
 
@@ -750,5 +750,31 @@ module.exports = {
         //TODO : communicate to front end and update the database, status
         res.status(200).send('ok');
     },
+
+    getProcessdState(req, res) {
+
+        var flight_id = req.params.flight_id;
+
+        if (!flight_id) {
+            res.status(500).send('Missing mandatory parameters flight_id');
+        }
+
+        flights.findAll({
+                attributes: ['id', 'user_id', 'uav_id', 'processed_state'],
+                where: {
+                    id: flight_id
+                }
+            })
+            .then(flights => {
+                if (flights && flights.length < 1) {
+                    var message = 'NOK, No flight found with flight id' + flight_id;
+                    return res.status(200).send(message);
+                } else if (flights.length == 1) {
+                    return res.status(200).send(JSON.stringify(flights));
+                }
+            }).catch(error => {
+                return res.status(200).send('Error getting the processed state, error ' + error);
+            });
+    }
 
 }

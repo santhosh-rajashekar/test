@@ -4281,6 +4281,7 @@ Content-Type: application/octet-stream
     app.post(urlPrefix + '/api/flights/updateAnalysisResult', flightController.updateAnalysisResult);
     app.post(urlPrefix + '/api/flights/updateDataConversionFailure', flightController.updateDataConversionFailure);
     app.post(urlPrefix + '/api/flights/notifyProgress', progressManager.notifyProgress);
+    app.get(urlPrefix + '/api/flights/getProcessdState/:flight_id', flightController.getProcessdState);
 
     app.get(urlPrefix + '/api/analytics/getTotalFlightHoursBySN/:serial_number', analyticsController.getTotalFlightHoursBySN);
     app.get(urlPrefix + '/api/analytics/getAllFlightLocationsBySN/:serial_number', analyticsController.getAllFlightLocationsBySN);
