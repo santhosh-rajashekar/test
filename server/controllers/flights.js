@@ -702,24 +702,28 @@ module.exports = {
     updateUntraceableData(req, res) {
 
         var flight_id = req.body.flight_id;
-        var untraceable_data = req.body.data_untraceable;
-        var untraceable_metadata = req.body.metadata_untraceable;
+        var data_untraceable = req.body.data_untraceable;
+        var metadata_untraceable = req.body.metadata_untraceable;
 
         return archived_flights.findById(flight_id)
-            .then(flight => {
-                if (!flight) {
+            .then(archived_flight => {
+                if (!archived_flight) {
                     res.status(404).send('Flight not found with the id : ' + flight_id);
                     return;
                 }
 
-                flight.data = data_to_update;
+                if (archived_flight && archived_flight.length > 0) {
+                    res.status(404).send('Found more than one entry in the archived flights for the flight with id : ' + flight_id);
+                    return;
+                }
 
-                return flight.update({
-                        data: data_to_update
+                return archived_flight.update({
+                        data: data_untraceable,
+                        metadata: metadata_untraceable
                     })
-                    .then(flight => {
+                    .then(archived_flight => {
                         //TODO : updateUntraceableData that will be passed from analysis module
-                        return res.status(200).send('flight update successully');
+                        return res.status(200).send('archived_flights update successully for flight id ' + archived_flight.flight_id);
                     })
                     .catch(error => {
                         console.log(error);
