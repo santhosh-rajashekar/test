@@ -240,7 +240,7 @@ var getReasonsForComponentUpdateByUAVIDs = function(req, res) {
 module.exports = {
     getTotalFlightHoursByPN(req, res) {
 
-        var partNumber = req.params.part_number;
+        var partNumber = req.body.part_number;
 
         getUAVIdsWithPartNumber(partNumber).then(listOfUavId => {
 
@@ -257,8 +257,8 @@ module.exports = {
 
     getTotalFlightHoursAndCycleyByPNPOS(req, res) {
 
-        var partNumber = req.params.part_number;
-        var position = req.params.position;
+        var partNumber = req.body.part_number;
+        var position = req.body.position;
 
         getUAVIdsWithPartNumberAndPosition(partNumber, position).then(listOfUavId => {
 
@@ -657,7 +657,7 @@ module.exports = {
 
     getReasonsForComponentUpdateByPN(req, res) {
 
-        var partNumber = req.params.part_number;
+        var partNumber = req.body.part_number;
 
         getUAVIdsWithPartNumber(partNumber).then(listOfUavId => {
 

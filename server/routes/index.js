@@ -4286,11 +4286,11 @@ Content-Type: application/octet-stream
 
     app.get(urlPrefix + '/api/analytics/getTotalFlightHoursAndCycleyBySN/:serial_number', analyticsController.getTotalFlightHoursAndCycleyBySN);
     app.get(urlPrefix + '/api/analytics/getAllFlightLocationsBySN/:serial_number', analyticsController.getAllFlightLocationsBySN);
-    app.get(urlPrefix + '/api/analytics/getTotalFlightHoursAndCycleyByPN/:part_number', analyticsController.getTotalFlightHoursByPN);
-    app.get(urlPrefix + '/api/analytics/getTotalFlightHoursAndCycleyByPN/:part_number/:position', analyticsController.getTotalFlightHoursAndCycleyByPNPOS);
+    app.post(urlPrefix + '/api/analytics/getTotalFlightHoursAndCycleyByPN', analyticsController.getTotalFlightHoursByPN);
+    app.post(urlPrefix + '/api/analytics/getTotalFlightHoursAndCycleyByPNPOS', analyticsController.getTotalFlightHoursAndCycleyByPNPOS);
     app.get(urlPrefix + '/api/analytics/getReasonsForComponentUpdateForAllUAVs', analyticsController.getReasonsForComponentUpdateForAllUAVs);
     app.get(urlPrefix + '/api/analytics/getReasonsForComponentUpdateByUAVID/:uav_id', analyticsController.getReasonsForComponentUpdateByUAVID);
     app.get(urlPrefix + '/api/analytics/getReasonsForComponentUpdateByMM/:manufacturer/:model', analyticsController.getReasonsForComponentUpdateByMM);
-    app.get(urlPrefix + '/api/analytics/getReasonsForComponentUpdateByPN/:part_number', analyticsController.getReasonsForComponentUpdateByPN);
+    app.post(urlPrefix + '/api/analytics/getReasonsForComponentUpdateByPN', analyticsController.getReasonsForComponentUpdateByPN);
     app.get(urlPrefix + '/api/analytics/getAnalysisResultsBySN/:serial_number', analyticsController.getAnalysisResultsBySN);
 };
