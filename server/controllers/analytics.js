@@ -300,7 +300,7 @@ module.exports = {
                 sequelize.query("SELECT data->>'location' AS FlightLocations FROM flights WHERE flights.uav_id IN (:uav_ids) and data->>'location' != '' GROUP BY data->>'location';", { replacements: { uav_ids: listOfUavId }, type: Sequelize.QueryTypes.SELECT })
                     .then(results => {
                         res.status(200).send(JSON.stringify(results));
-                    })
+                    });
             } else {
                 res.status(200).send(JSON.stringify('No flights found with that serial number ' + serialNumber));
             }
@@ -556,11 +556,6 @@ module.exports = {
                 if (partnumber && partnumber.length == 1) {
 
                     var id = partnumber[0].id.toString();
-
-                    var preventive_replacement = 0;
-                    var detected_failure = 0;
-                    var change_for_testing = 0;
-                    var miscellaneous = 0;
 
                     return uavhistories.findAll({
                         attributes: ['uav_id', 'history']
