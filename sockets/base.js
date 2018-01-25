@@ -1,28 +1,25 @@
 'use strict';
 var io = require('socket.io')();
 const flights = require('../server/models').flights;
+const notificationController = require('../server/controllers/notifier');
 var clients = [];
 var sockets = new Set();
 
-
 var notifyClient = function(req, res, flight_id, uav_id, user_id, updateFlight) {
+
+    if (updateFlight) {
+        //Note : whether the client still exist to receive the notification or not, save the state received
+        updateProgressedStateInFlight(req, res, flight_id);
+    }
 
     var clientsToNotify = getClientsToNotify(user_id);
     var socketsToNotify = getSockets(clientsToNotify);
 
     if (socketsToNotify && socketsToNotify.length > 0) {
-
-        if (updateFlight) {
-            updateProgressedStateInFlight(req, res, flight_id);
-        }
-
         for (let i = 0; i < socketsToNotify.length; i++) {
             console.log('socketsToNotify called for ' + socketsToNotify[i].id);
             socketsToNotify[i].emit('progress', req.body);
         }
-
-
-
         res.status(200).send('ok');
     } else {
         res.status(500).send('nok, client not found to receive the progress status');
@@ -65,6 +62,10 @@ var updateProgressedStateInFlight = function(req, res, flight_id) {
         "progress_state": state_received.process_state,
     };
 
+    if (state_received.error) {
+        value.error = state_received.error;
+    }
+
     flights.findById(flight_id)
         .then(flight => {
             try {
@@ -72,8 +73,6 @@ var updateProgressedStateInFlight = function(req, res, flight_id) {
                     console.log('No flight found with the flight id ' + flight_id + ' to update the progress state');
                     return;
                 }
-
-                flight.processed_state = value;
 
                 flight.update({
                         processed_state: value
@@ -123,6 +122,67 @@ var getSockets = function(clientsToNotify) {
     }
 
     return socketsToNotify;
+};
+
+var prepareMessage = function(response) {
+
+    var module_name = response.module_name;
+    var title = response.title;
+    var description = response.description;
+    var user_id = response.user_id;
+    var uav_id = response.uav_id;
+    var flight_id = response.flight_id;
+    var progress = response.progress;
+    var process_state = response.process_state;
+    var error = response.error;
+
+    var message = "There is an error in processing the below fligt log \n \
+    FlightId : " + flight_id + "\nUser Id : " + user_id + "\nUAV Id : " + uav_id + "\nModule Where Error Occured : " + module_name + "\
+    \nError : " + error.message + "\nError code : " + error.code + "";
+
+    return message;
+};
+
+var notifyErrorViaEmail = function(req, res) {
+    var message = prepareMessage(req.body);
+    notificationController.notifyViaEmail(message).then(result => {
+        if (result && result.notified) {
+            console.log('Email sent successfully of the error state and progress will be notified.');
+        }
+    }).catch(result => {
+        //TODO : push to monitoring and log file, attention to be paid here
+        console.log('Sending email failed.');
+    });
+};
+
+var saveFailedStateInDatabase = function(req, res) {
+
+    //TODO : push to monitoring and log file, attention to be paid here
+    //This method is not returning anything, error scenarios are just consoled at the moment
+    var flight_id = req.body.flight_id;
+    var error = req.body.error;
+    var dataToUpdate = { "status": error.code };
+
+    flights.findById(flight_id)
+        .then(flight => {
+            if (!flight) {
+                var message = 'NOK, No flight found with flight id' + flight_id + ' to update the error state';
+                return;
+            }
+
+            flight.data = dataToUpdate;
+            flight.update({
+                    data: flight.data,
+                })
+                .then(flight => {
+                    console.log('Error state successfully updated in flights table for flight id ' + flight.id);
+                })
+                .catch(error => {
+                    console.log(error);
+                });
+        }).catch(error => {
+            console.log(error);
+        });
 };
 
 module.exports = {
@@ -179,6 +239,23 @@ module.exports = {
 
         if (progress < 0 || progress > 100) {
             res.status(500).send('Invalid value for the progress parameter, value should be between 0 and 100');
+        }
+
+        if (process_state == 'failed') {
+
+            var error = req.body.error;
+            if (!error) {
+                res.status(500).send('Invalid arguments, error attribute is mandatory when process state is failed');
+            }
+
+            var code = error.code;
+            var errorMessage = error.message;
+            if (!code && !errorMessage) {
+                res.status(500).send('Invalid arguments, error field should have code and message attributes when process state is failed');
+            } else {
+                notifyErrorViaEmail(req, res);
+                saveFailedStateInDatabase(req, res);
+            }
         }
 
         if (user_id && uav_id) {

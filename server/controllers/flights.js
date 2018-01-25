@@ -1,12 +1,10 @@
 "use strict";
-
+const notificationController = require('./notifier');
 const flights = require('../models').flights;
 const archived_flights = require('../models').archived_flights;
 const datauavs = require('../models').datauavs;
 const partnumberController = require('./partnumber');
-
 const express = require('express');
-const mailer = require('express-mailer');
 const multer = require('multer');
 const fs = require('fs');
 const path = require("path");
@@ -15,22 +13,7 @@ var _ = require('lodash');
 const Sequelize = require('sequelize');
 const sequelize = require('../models/index').sequelize;
 
-
 const Op = Sequelize.Op;
-const app = express();
-app.set('views', __dirname + '/../views');
-app.set('view engine', 'jade');
-const sendMailer = mailer.extend(app, {
-    from: 'hcm-admin@safe-drone.com',
-    host: 'smtp.safe-drone.com', // hostname
-    secureConnection: false, // use SSL
-    port: 587, // port for secure SMTP
-    transportMethod: 'SMTP', // default is SMTP. Accepts anything that nodemailer accepts
-    auth: {
-        user: 'hcm-admin@safe-drone.com',
-        pass: 'hcm0nlyc@nsend'
-    }
-});
 
 const DIR_UPLOADS = './uploads/';
 const DIR_UPLOADED = './uploaded/';
@@ -404,32 +387,13 @@ module.exports = {
                         });
                     }
 
-                    console.log('Message for Email =');
-                    console.log(message);
-
-                    var toList;
-                    if (process.env.NODE_ENV == 'production') {
-                        toList = 'philipp.koehler@lht.dlh.de,santhoshakaroti.rajashekar@altran.com,saeed.ahmed@altran.com,adnan.abdulhai@altran.com,ali.boushehri@altran.com,shaheer.kollathodi@altran.com';
-                    } else if (process.env.NODE_ENV == 'test') {
-                        toList = 'santhoshakaroti.rajashekar@altran.com, saeed.ahmed@altran.com,ali.boushehri@altran.com,shaheer.kollathodi@altran.com';
-                    }
-
-                    if (process.env.NODE_ENV == 'production' || process.env.NODE_ENV == 'test') {
-                        sendMailer.mailer.send('email', {
-                            to: toList,
-                            subject: 'There is some problems in the data processing',
-                            pretty: true,
-                            otherProperty: message
-                        }, function(err) {
-                            console.log('Email Sent');
-                            if (err) {
-                                console.log(err);
-                                console.log('But; There was an error sending the email');
-                                return res.status(200).send(error);
-                            }
-                        });
-                    }
-                    return res.status(200).send('Status updated & Email sent');
+                    notificationController.notifyViaEmail(message).then(result => {
+                        if (result && result.notified) {
+                            return res.status(200).send('Email sent successfully.');
+                        }
+                    }).catch(result => {
+                        return res.status(200).send('Sending email failed.');
+                    })
                 }
             }).catch(error => {
                 console.log(error);
@@ -594,7 +558,6 @@ module.exports = {
                 [Sequelize.col("uav_id")]
             ]
         }).then(results => {
-            console.log(results);
             res.status(200).send(JSON.stringify(results));
         })
     },
