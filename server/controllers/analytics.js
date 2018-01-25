@@ -18,109 +18,226 @@ const Sequelize = require('sequelize');
 const sequelize = require('../models/index').sequelize;
 const Op = Sequelize.Op;
 
+var getUAVIdsWithSerialNumber = function(serialNumber) {
+
+    var listOfUavId = [];
+    return flights.findAll({
+        attributes: ['metadata', 'data', 'uav_id'],
+        where: {
+            metadata: {
+                $ne: null
+            },
+            is_archived: false
+        },
+    }).then(flights => {
+
+        if (flights && flights.length > 0) {
+
+            for (let i = 0; i < flights.length; i++) {
+                var uav_metadata = flights[i].metadata;
+                var uav_id = flights[i].uav_id;
+                var serialNumberExist = partnumberController.containsSerialNumber(uav_metadata, serialNumber);
+                if (serialNumberExist) {
+                    listOfUavId.push(uav_id);
+                }
+            }
+        }
+        console.log('listOfUavId found are ');
+        console.log(listOfUavId);
+        return listOfUavId;
+
+    }).catch(error => {
+        console.log(error);
+        return listOfUavId;
+    });
+};
+
+var getUAVIdsWithPartNumber = function(partNumber) {
+
+    var listOfUavId = [];
+    return flights.findAll({
+        attributes: ['metadata', 'data', 'uav_id'],
+        where: {
+            metadata: {
+                $ne: null
+            },
+            is_archived: false
+        },
+    }).then(flights => {
+
+        if (flights && flights.length > 0) {
+
+            for (let i = 0; i < flights.length; i++) {
+                var uav_metadata = flights[i].metadata;
+                var uav_id = flights[i].uav_id;
+                var serialNumberExist = partnumberController.containsPartNumber(uav_metadata, partNumber);
+                if (serialNumberExist) {
+                    listOfUavId.push(uav_id);
+                }
+            }
+        }
+        return listOfUavId;
+
+    }).catch(error => {
+        console.log(error);
+        return listOfUavId;
+    });
+};
+
+var getUAVIdsWithPartNumberAndPosition = function(partNumber, position) {
+
+    var listOfUavId = [];
+    return flights.findAll({
+        attributes: ['metadata', 'data', 'uav_id'],
+        where: {
+            metadata: {
+                $ne: null
+            },
+            is_archived: false
+        },
+    }).then(flights => {
+
+        if (flights && flights.length > 0) {
+
+            for (let i = 0; i < flights.length; i++) {
+                var uav_metadata = flights[i].metadata;
+                var uav_id = flights[i].uav_id;
+                var serialNumberExist = partnumberController.containsPartNumberAtPos(uav_metadata, partNumber, position);
+                if (serialNumberExist) {
+                    listOfUavId.push(uav_id);
+                }
+            }
+        }
+        return listOfUavId;
+
+    }).catch(error => {
+        console.log(error);
+        return listOfUavId;
+    });
+};
+
+var getReasonsForComponentUpdateByUAVIDs = function(req, res) {
+
+    var uav_ids = req.params.uav_ids;
+    var preventive_replacement = 0;
+    var detected_failure = 0;
+    var change_for_testing = 0;
+    var miscellaneous = 0;
+
+    var reasonsForComponenetsUpdate = {
+        'Preventative replacement': preventive_replacement,
+        'Replacement due detected failure': detected_failure,
+        'Change for testing': change_for_testing,
+        'Miscellaneous': miscellaneous
+    }
+
+    return uavhistories.findAll({
+        attributes: ['history'],
+        where: {
+            uav_id: {
+                [Op.in]: uav_ids
+            },
+        }
+    }).then(uavhistories => {
+
+        if (uavhistories && uavhistories.length > 0) {
+
+            for (let i = 0; i < uavhistories.length; i++) {
+                var history = uavhistories[i].history;
+
+                if (history.fcs && history.fcs.length) {
+
+                    for (let i = 0; i < history.fcs.length; i++) {
+
+                        if (history.fcs[i].old && history.fcs[i].old.change_reason) {
+
+                            var reason = history.fcs[i].old.change_reason;
+                            if (reason == 1) {
+                                preventive_replacement++;
+                            } else if (reason == 2) {
+                                detected_failure++;
+                            } else if (reason == 3) {
+                                change_for_testing++;
+                            } else if (reason == 4) {
+                                miscellaneous++;
+                            }
+                        }
+                    }
+                }
+
+                if (history.components && history.components.length) {
+
+                    for (let i = 0; i < history.components.length; i++) {
+
+                        if (history.components[i].old && history.components[i].old.bldc) {
+
+                            var reason = history.components[i].old.bldc.change_reason;
+                            if (reason == 1) {
+                                preventive_replacement++;
+                            } else if (reason == 2) {
+                                detected_failure++;
+                            } else if (reason == 3) {
+                                change_for_testing++;
+                            } else if (reason == 4) {
+                                miscellaneous++;
+                            }
+                        }
+
+                        if (history.components[i].old && history.components[i].old.esc) {
+
+                            var reason = history.components[i].old.esc.change_reason;
+                            if (reason == 1) {
+                                preventive_replacement++;
+                            } else if (reason == 2) {
+                                detected_failure++;
+                            } else if (reason == 3) {
+                                change_for_testing++;
+                            } else if (reason == 4) {
+                                miscellaneous++;
+                            }
+                        }
+
+                        if (history.components[i].old && history.components[i].old.prop) {
+
+                            var reason = history.components[i].old.prop.change_reason;
+                            if (reason == 1) {
+                                preventive_replacement++;
+                            } else if (reason == 2) {
+                                detected_failure++;
+                            } else if (reason == 3) {
+                                change_for_testing++;
+                            } else if (reason == 4) {
+                                miscellaneous++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            var reasonsForComponenetsUpdate = {
+                'Preventative replacement': preventive_replacement,
+                'Replacement due detected failure': detected_failure,
+                'Change for testing': change_for_testing,
+                'Miscellaneous': miscellaneous
+            }
+
+            res.status(200).send(JSON.stringify(reasonsForComponenetsUpdate));
+        } else {
+            res.status(200).send(JSON.stringify(reasonsForComponenetsUpdate));
+        }
+
+    }).catch(error => {
+        console.log(error);
+        res.status(200).send(JSON.stringify('Error while getting the reasons for components update '));
+    });
+};
+
 module.exports = {
-
-    getUAVIdsWithSerialNumber(serialNumber) {
-
-        var listOfUavId = [];
-        return flights.findAll({
-            attributes: ['metadata', 'data', 'uav_id'],
-            where: {
-                metadata: {
-                    $ne: null
-                },
-                is_archived: false
-            },
-        }).then(flights => {
-
-            if (flights && flights.length > 0) {
-
-                for (let i = 0; i < flights.length; i++) {
-                    var uav_metadata = flights[i].metadata;
-                    var uav_id = flights[i].uav_id;
-                    var serialNumberExist = partnumberController.containsSerialNumber(uav_metadata, serialNumber);
-                    if (serialNumberExist) {
-                        listOfUavId.push(uav_id);
-                    }
-                }
-            }
-            return listOfUavId;
-
-        }).catch(error => {
-            console.log(error);
-            return listOfUavId;
-        });
-    },
-
-    getUAVIdsWithPartNumber(partNumber) {
-
-        var listOfUavId = [];
-        return flights.findAll({
-            attributes: ['metadata', 'data', 'uav_id'],
-            where: {
-                metadata: {
-                    $ne: null
-                },
-                is_archived: false
-            },
-        }).then(flights => {
-
-            if (flights && flights.length > 0) {
-
-                for (let i = 0; i < flights.length; i++) {
-                    var uav_metadata = flights[i].metadata;
-                    var uav_id = flights[i].uav_id;
-                    var serialNumberExist = partnumberController.containsPartNumber(uav_metadata, partNumber);
-                    if (serialNumberExist) {
-                        listOfUavId.push(uav_id);
-                    }
-                }
-            }
-            return listOfUavId;
-
-        }).catch(error => {
-            console.log(error);
-            return listOfUavId;
-        });
-    },
-
-    getUAVIdsWithPartNumberAndPosition(partNumber, position) {
-
-        var listOfUavId = [];
-        return flights.findAll({
-            attributes: ['metadata', 'data', 'uav_id'],
-            where: {
-                metadata: {
-                    $ne: null
-                },
-                is_archived: false
-            },
-        }).then(flights => {
-
-            if (flights && flights.length > 0) {
-
-                for (let i = 0; i < flights.length; i++) {
-                    var uav_metadata = flights[i].metadata;
-                    var uav_id = flights[i].uav_id;
-                    var serialNumberExist = partnumberController.containsPartNumberAtPos(uav_metadata, partNumber, position);
-                    if (serialNumberExist) {
-                        listOfUavId.push(uav_id);
-                    }
-                }
-            }
-            return listOfUavId;
-
-        }).catch(error => {
-            console.log(error);
-            return listOfUavId;
-        });
-    },
-
     getTotalFlightHoursByPN(req, res) {
 
         var partNumber = req.params.part_number;
 
-        module.exports.getUAVIdsWithPartNumber(partNumber).then(listOfUavId => {
+        getUAVIdsWithPartNumber(partNumber).then(listOfUavId => {
 
             if (listOfUavId.length > 0) {
                 sequelize.query("SELECT SUM(CAST(data->>'flight_hours' AS REAL)) AS TotalFlightHours, SUM(CAST(data->>'flight_cycles' AS REAL)) AS TotalFlightCycles FROM flights WHERE flights.uav_id IN (:uav_ids);", { replacements: { uav_ids: listOfUavId }, type: Sequelize.QueryTypes.SELECT })
@@ -138,7 +255,7 @@ module.exports = {
         var partNumber = req.params.part_number;
         var position = req.params.position;
 
-        module.exports.getUAVIdsWithPartNumberAndPosition(partNumber, position).then(listOfUavId => {
+        getUAVIdsWithPartNumberAndPosition(partNumber, position).then(listOfUavId => {
 
             if (listOfUavId.length > 0) {
                 sequelize.query("SELECT SUM(CAST(data->>'flight_hours' AS REAL)) AS TotalFlightHours, SUM(CAST(data->>'flight_cycles' AS REAL)) AS TotalFlightCycles FROM flights WHERE flights.uav_id IN (:uav_ids);", { replacements: { uav_ids: listOfUavId }, type: Sequelize.QueryTypes.SELECT })
@@ -151,14 +268,14 @@ module.exports = {
         });
     },
 
-    getTotalFlightHoursBySN(req, res) {
+    getTotalFlightHoursAndCycleyBySN(req, res) {
 
         var serialNumber = req.params.serial_number;
 
-        module.exports.getUAVIdsWithSerialNumber(serialNumber).then(listOfUavId => {
+        getUAVIdsWithSerialNumber(serialNumber).then(listOfUavId => {
 
             if (listOfUavId.length > 0) {
-                sequelize.query("SELECT SUM(CAST(data->>'flight_hours' AS REAL)) AS TotalFlightHours FROM flights WHERE flights.uav_id IN (:uav_ids);", { replacements: { uav_ids: listOfUavId }, type: Sequelize.QueryTypes.SELECT })
+                sequelize.query("SELECT SUM(CAST(data->>'flight_hours' AS REAL)) AS TotalFlightHours, SUM(CAST(data->>'flight_cycles' AS REAL)) AS TotalFlightCycles FROM flights WHERE flights.uav_id IN (:uav_ids);", { replacements: { uav_ids: listOfUavId }, type: Sequelize.QueryTypes.SELECT })
                     .then(results => {
                         res.status(200).send(JSON.stringify(results));
                     })
@@ -172,7 +289,7 @@ module.exports = {
 
         var serialNumber = req.params.serial_number;
 
-        module.exports.getUAVIdsWithSerialNumber(serialNumber).then(listOfUavId => {
+        getUAVIdsWithSerialNumber(serialNumber).then(listOfUavId => {
 
             if (listOfUavId.length > 0) {
                 sequelize.query("SELECT data->>'location' AS FlightLocations FROM flights WHERE flights.uav_id IN (:uav_ids) and data->>'location' != '' GROUP BY data->>'location';", { replacements: { uav_ids: listOfUavId }, type: Sequelize.QueryTypes.SELECT })
@@ -402,122 +519,6 @@ module.exports = {
         });
     },
 
-    getReasonsForComponentUpdateByUAVIDs(req, res) {
-
-        var uav_ids = req.params.uav_ids;
-        var preventive_replacement = 0;
-        var detected_failure = 0;
-        var change_for_testing = 0;
-        var miscellaneous = 0;
-
-        var reasonsForComponenetsUpdate = {
-            'Preventative replacement': preventive_replacement,
-            'Replacement due detected failure': detected_failure,
-            'Change for testing': change_for_testing,
-            'Miscellaneous': miscellaneous
-        }
-
-        return uavhistories.findAll({
-            attributes: ['history'],
-            where: {
-                uav_id: {
-                    [Op.in]: uav_ids
-                },
-            }
-        }).then(uavhistories => {
-
-            if (uavhistories && uavhistories.length > 0) {
-
-                for (let i = 0; i < uavhistories.length; i++) {
-                    var history = uavhistories[i].history;
-
-                    if (history.fcs && history.fcs.length) {
-
-                        for (let i = 0; i < history.fcs.length; i++) {
-
-                            if (history.fcs[i].old && history.fcs[i].old.change_reason) {
-
-                                var reason = history.fcs[i].old.change_reason;
-                                if (reason == 1) {
-                                    preventive_replacement++;
-                                } else if (reason == 2) {
-                                    detected_failure++;
-                                } else if (reason == 3) {
-                                    change_for_testing++;
-                                } else if (reason == 4) {
-                                    miscellaneous++;
-                                }
-                            }
-                        }
-                    }
-
-                    if (history.components && history.components.length) {
-
-                        for (let i = 0; i < history.components.length; i++) {
-
-                            if (history.components[i].old && history.components[i].old.bldc) {
-
-                                var reason = history.components[i].old.bldc.change_reason;
-                                if (reason == 1) {
-                                    preventive_replacement++;
-                                } else if (reason == 2) {
-                                    detected_failure++;
-                                } else if (reason == 3) {
-                                    change_for_testing++;
-                                } else if (reason == 4) {
-                                    miscellaneous++;
-                                }
-                            }
-
-                            if (history.components[i].old && history.components[i].old.esc) {
-
-                                var reason = history.components[i].old.esc.change_reason;
-                                if (reason == 1) {
-                                    preventive_replacement++;
-                                } else if (reason == 2) {
-                                    detected_failure++;
-                                } else if (reason == 3) {
-                                    change_for_testing++;
-                                } else if (reason == 4) {
-                                    miscellaneous++;
-                                }
-                            }
-
-                            if (history.components[i].old && history.components[i].old.prop) {
-
-                                var reason = history.components[i].old.prop.change_reason;
-                                if (reason == 1) {
-                                    preventive_replacement++;
-                                } else if (reason == 2) {
-                                    detected_failure++;
-                                } else if (reason == 3) {
-                                    change_for_testing++;
-                                } else if (reason == 4) {
-                                    miscellaneous++;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                var reasonsForComponenetsUpdate = {
-                    'Preventative replacement': preventive_replacement,
-                    'Replacement due detected failure': detected_failure,
-                    'Change for testing': change_for_testing,
-                    'Miscellaneous': miscellaneous
-                }
-
-                res.status(200).send(JSON.stringify(reasonsForComponenetsUpdate));
-            } else {
-                res.status(200).send(JSON.stringify(reasonsForComponenetsUpdate));
-            }
-
-        }).catch(error => {
-            console.log(error);
-            res.status(200).send(JSON.stringify('Error while getting the reasons for components update '));
-        });
-    },
-
     getReasonsForComponentUpdateByMM(req, res) {
 
         var manufacturer = req.params.manufacturer;
@@ -630,7 +631,7 @@ module.exports = {
                             'Replacement due detected failure': detected_failure,
                             'Change for testing': change_for_testing,
                             'Miscellaneous': miscellaneous
-                        }
+                        };
 
                         res.status(200).send(JSON.stringify(reasonsForComponenetsUpdate));
 
@@ -650,11 +651,11 @@ module.exports = {
 
         var partNumber = req.params.part_number;
 
-        module.exports.getUAVIdsWithPartNumber(partNumber).then(listOfUavId => {
+        getUAVIdsWithPartNumber(partNumber).then(listOfUavId => {
 
             if (listOfUavId.length > 0) {
                 req.params.uav_ids = listOfUavId;
-                return module.exports.getReasonsForComponentUpdateByUAVIDs(req, res);
+                return getReasonsForComponentUpdateByUAVIDs(req, res);
             } else {
                 res.status(200).send('No component found with the part_number ' + partNumber + ' check the provided part number and try again!');
             }
@@ -665,7 +666,7 @@ module.exports = {
 
         var serialNumber = req.params.serial_number;
 
-        module.exports.getUAVIdsWithSerialNumber(serialNumber).then(listOfUavId => {
+        getUAVIdsWithSerialNumber(serialNumber).then(listOfUavId => {
 
             if (listOfUavId.length > 0) {
 

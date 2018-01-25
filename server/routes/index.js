@@ -4284,7 +4284,7 @@ Content-Type: application/octet-stream
     app.get(urlPrefix + '/api/flights/getProcessdState/:flight_id', flightController.getProcessdState);
     app.post(urlPrefix + '/api/flights/updateUntraceableData', flightController.updateUntraceableData);
 
-    app.get(urlPrefix + '/api/analytics/getTotalFlightHoursBySN/:serial_number', analyticsController.getTotalFlightHoursBySN);
+    app.get(urlPrefix + '/api/analytics/getTotalFlightHoursAndCycleyBySN/:serial_number', analyticsController.getTotalFlightHoursAndCycleyBySN);
     app.get(urlPrefix + '/api/analytics/getAllFlightLocationsBySN/:serial_number', analyticsController.getAllFlightLocationsBySN);
     app.get(urlPrefix + '/api/analytics/getTotalFlightHoursAndCycleyByPN/:part_number', analyticsController.getTotalFlightHoursByPN);
     app.get(urlPrefix + '/api/analytics/getTotalFlightHoursAndCycleyByPN/:part_number/:position', analyticsController.getTotalFlightHoursAndCycleyByPNPOS);
