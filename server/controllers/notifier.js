@@ -30,7 +30,8 @@ module.exports = {
             if (process.env.NODE_ENV == 'production') {
                 toList = 'philipp.koehler@lht.dlh.de,santhoshakaroti.rajashekar@altran.com,saeed.ahmed@altran.com,adnan.abdulhai@altran.com,ali.boushehri@altran.com,shaheer.kollathodi@altran.com';
             } else if (process.env.NODE_ENV == 'test') {
-                toList = 'santhoshakaroti.rajashekar@altran.com, saeed.ahmed@altran.com,ali.boushehri@altran.com,shaheer.kollathodi@altran.com';
+                // toList = 'santhoshakaroti.rajashekar@altran.com, saeed.ahmed@altran.com,ali.boushehri@altran.com,shaheer.kollathodi@altran.com';
+                toList = 'santhoshakaroti.rajashekar@altran.com';
             }
 
             if (process.env.NODE_ENV == 'production' || process.env.NODE_ENV == 'test') {

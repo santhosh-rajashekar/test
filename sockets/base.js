@@ -136,15 +136,16 @@ var prepareMessage = function(response) {
     var process_state = response.process_state;
     var error = response.error;
 
-    var message = "There is an error in processing the below fligt log \n \
-    FlightId : " + flight_id + "\nUser Id : " + user_id + "\nUAV Id : " + uav_id + "\nModule Where Error Occured : " + module_name + "\
-    \nError : " + error.message + "\nError code : " + error.code + "";
+    var message = "There is an error in processing the below fligt log <br> \
+    FlightId : " + flight_id + "<br>User Id : " + user_id + "<br>UAV Id : " + uav_id + "<br>Module Where Error Occured : " + module_name + "\
+    <br>Error : " + error.message + "<br>Error code : " + error.code + "";
 
     return message;
 };
 
 var notifyErrorViaEmail = function(req, res) {
     var message = prepareMessage(req.body);
+
     notificationController.notifyViaEmail(message).then(result => {
         if (result && result.notified) {
             console.log('Email sent successfully of the error state and progress will be notified.');
