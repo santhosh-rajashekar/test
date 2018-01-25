@@ -18,6 +18,7 @@ const Sequelize = require('sequelize');
 const sequelize = require('../models/index').sequelize;
 const Op = Sequelize.Op;
 
+
 var getUAVIdsWithSerialNumber = function(serialNumber) {
 
     var listOfUavId = [];
@@ -38,7 +39,9 @@ var getUAVIdsWithSerialNumber = function(serialNumber) {
                 var uav_id = flights[i].uav_id;
                 var serialNumberExist = partnumberController.containsSerialNumber(uav_metadata, serialNumber);
                 if (serialNumberExist) {
-                    listOfUavId.push(uav_id);
+                    if (listOfUavId.includes(uav_id) == false) {
+                        listOfUavId.push(uav_id);
+                    }
                 }
             }
         }
@@ -72,7 +75,9 @@ var getUAVIdsWithPartNumber = function(partNumber) {
                 var uav_id = flights[i].uav_id;
                 var serialNumberExist = partnumberController.containsPartNumber(uav_metadata, partNumber);
                 if (serialNumberExist) {
-                    listOfUavId.push(uav_id);
+                    if (listOfUavId.includes(uav_id) == false) {
+                        listOfUavId.push(uav_id);
+                    }
                 }
             }
         }
@@ -104,7 +109,9 @@ var getUAVIdsWithPartNumberAndPosition = function(partNumber, position) {
                 var uav_id = flights[i].uav_id;
                 var serialNumberExist = partnumberController.containsPartNumberAtPos(uav_metadata, partNumber, position);
                 if (serialNumberExist) {
-                    listOfUavId.push(uav_id);
+                    if (listOfUavId.includes(uav_id) == false) {
+                        listOfUavId.push(uav_id);
+                    }
                 }
             }
         }
@@ -125,11 +132,11 @@ var getReasonsForComponentUpdateByUAVIDs = function(req, res) {
     var miscellaneous = 0;
 
     var reasonsForComponenetsUpdate = {
-        'Preventative replacement': preventive_replacement,
-        'Replacement due detected failure': detected_failure,
-        'Change for testing': change_for_testing,
+        'Preventative': preventive_replacement,
+        'Replacement': detected_failure,
+        'Change': change_for_testing,
         'Miscellaneous': miscellaneous
-    }
+    };
 
     return uavhistories.findAll({
         attributes: ['history'],
@@ -214,12 +221,10 @@ var getReasonsForComponentUpdateByUAVIDs = function(req, res) {
                 }
             }
 
-            var reasonsForComponenetsUpdate = {
-                'Preventative replacement': preventive_replacement,
-                'Replacement due detected failure': detected_failure,
-                'Change for testing': change_for_testing,
-                'Miscellaneous': miscellaneous
-            }
+            reasonsForComponenetsUpdate.Preventative = preventive_replacement;
+            reasonsForComponenetsUpdate.Replacement = detected_failure;
+            reasonsForComponenetsUpdate.Change = change_for_testing;
+            reasonsForComponenetsUpdate.Miscellaneous = miscellaneous;
 
             res.status(200).send(JSON.stringify(reasonsForComponenetsUpdate));
         } else {
@@ -309,6 +314,13 @@ module.exports = {
         var change_for_testing = 0;
         var miscellaneous = 0;
 
+        var reasonsForComponenetsUpdate = {
+            'Preventative': preventive_replacement,
+            'Replacement': detected_failure,
+            'Change': change_for_testing,
+            'Miscellaneous': miscellaneous
+        };
+
         return uavhistories.findAll({
             attributes: ['uav_id', 'history']
         }).then(uavhistories => {
@@ -387,12 +399,10 @@ module.exports = {
                     }
                 }
 
-                var reasonsForComponenetsUpdate = {
-                    'Preventative replacement': preventive_replacement,
-                    'Replacement due detected failure': detected_failure,
-                    'Change for testing': change_for_testing,
-                    'Miscellaneous': miscellaneous
-                }
+                reasonsForComponenetsUpdate.Preventative = preventive_replacement;
+                reasonsForComponenetsUpdate.Replacement = detected_failure;
+                reasonsForComponenetsUpdate.Change = change_for_testing;
+                reasonsForComponenetsUpdate.Miscellaneous = miscellaneous;
 
                 res.status(200).send(JSON.stringify(reasonsForComponenetsUpdate));
             } else {
@@ -414,9 +424,9 @@ module.exports = {
         var miscellaneous = 0;
 
         var reasonsForComponenetsUpdate = {
-            'Preventative replacement': preventive_replacement,
-            'Replacement due detected failure': detected_failure,
-            'Change for testing': change_for_testing,
+            'Preventative': preventive_replacement,
+            'Replacement': detected_failure,
+            'Change': change_for_testing,
             'Miscellaneous': miscellaneous
         }
 
@@ -501,12 +511,10 @@ module.exports = {
                     }
                 }
 
-                var reasonsForComponenetsUpdate = {
-                    'Preventative replacement': preventive_replacement,
-                    'Replacement due detected failure': detected_failure,
-                    'Change for testing': change_for_testing,
-                    'Miscellaneous': miscellaneous
-                }
+                reasonsForComponenetsUpdate.Preventative = preventive_replacement;
+                reasonsForComponenetsUpdate.Replacement = detected_failure;
+                reasonsForComponenetsUpdate.Change = change_for_testing;
+                reasonsForComponenetsUpdate.Miscellaneous = miscellaneous;
 
                 res.status(200).send(JSON.stringify(reasonsForComponenetsUpdate));
             } else {
@@ -528,6 +536,13 @@ module.exports = {
         var detected_failure = 0;
         var change_for_testing = 0;
         var miscellaneous = 0;
+
+        var reasonsForComponenetsUpdate = {
+            'Preventative': preventive_replacement,
+            'Replacement': detected_failure,
+            'Change': change_for_testing,
+            'Miscellaneous': miscellaneous
+        }
 
         return partnumber
             .all({
@@ -626,12 +641,10 @@ module.exports = {
                             }
                         }
 
-                        var reasonsForComponenetsUpdate = {
-                            'Preventative replacement': preventive_replacement,
-                            'Replacement due detected failure': detected_failure,
-                            'Change for testing': change_for_testing,
-                            'Miscellaneous': miscellaneous
-                        };
+                        reasonsForComponenetsUpdate.Preventative = preventive_replacement;
+                        reasonsForComponenetsUpdate.Replacement = detected_failure;
+                        reasonsForComponenetsUpdate.Change = change_for_testing;
+                        reasonsForComponenetsUpdate.Miscellaneous = miscellaneous;
 
                         res.status(200).send(JSON.stringify(reasonsForComponenetsUpdate));
 
