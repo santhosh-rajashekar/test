@@ -6,6 +6,7 @@ const mailer = require('express-mailer');
 const app = express();
 app.set('views', __dirname + '/../views');
 app.set('view engine', 'jade');
+app.set('view options', { pretty: true });
 const sendMailer = mailer.extend(app, {
     from: 'hcm-admin@safe-drone.com',
     host: 'smtp.safe-drone.com', // hostname
