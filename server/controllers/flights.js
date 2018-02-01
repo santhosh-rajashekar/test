@@ -142,17 +142,17 @@ module.exports = {
                                 var data = _create_final_file(req, res, flights, _destination_filename);
 
                                 if (data.result) {
-                                    // archived_flights.create({
-                                    //     uav_id: body_data.uavid,
-                                    //     flight_id: flights.id
-                                    // }).then(archived_flights => {
-                                    //     console.log('entry created successfully in archived_flights table');
-                                    //     res.status(200).send({ 'result': true, 'flight_id': flights.id, 'destination filename': _destination_filename });
-                                    // }).catch(error => {
-                                    //     console.log(error);
-                                    //     console.log('error in creating row in the archived_flights table');
-                                    //     res.status(200).send({ 'result': false, 'message': 'Error in updating the destination filename', 'flight_id': flights.id, 'destination filename': _destination_filename });
-                                    // });
+                                    archived_flights.create({
+                                        uav_id: body_data.uavid,
+                                        flight_id: flights.id
+                                    }).then(archived_flights => {
+                                        console.log('entry created successfully in archived_flights table');
+                                        res.status(200).send({ 'result': true, 'flight_id': flights.id, 'destination filename': _destination_filename });
+                                    }).catch(error => {
+                                        console.log(error);
+                                        console.log('error in creating row in the archived_flights table');
+                                        res.status(200).send({ 'result': false, 'message': 'Error in updating the destination filename', 'flight_id': flights.id, 'destination filename': _destination_filename });
+                                    });
 
                                     res.status(200).send({ 'result': true, 'flight_id': flights.id, 'destination filename': _destination_filename });
                                 } else {
