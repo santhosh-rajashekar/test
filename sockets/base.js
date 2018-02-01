@@ -136,11 +136,9 @@ var prepareMessage = function(response) {
     var process_state = response.process_state;
     var error = response.error;
 
-    var message = "There is an error in processing the below fligt log | \
-    FlightId : " + flight_id + "|User Id : " + user_id + "|UAV Id : " + uav_id + "|Module Where Error Occured : " + module_name + "\
-    |Error : " + error.message + "|Error code : " + error.code + "";
-
-    console.log(message);
+    var message = "There is an error in processing the fligt log : \
+    FlightId : " + flight_id + " | User Id : " + user_id + " | UAV Id : " + uav_id + " | Module Where Error Occured : " + module_name + " \
+    | Error : " + error.message + " | Error code : " + error.code + "";
 
     return message;
 };
