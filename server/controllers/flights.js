@@ -1,7 +1,7 @@
 "use strict";
 const notificationController = require('./notifier');
 const flights = require('../models').flights;
-const archived_flights = require('../models').archived_flights;
+const flights_archived = require('../models').flights_archived;
 const datauavs = require('../models').datauavs;
 const partnumberController = require('./partnumber');
 const express = require('express');
@@ -142,19 +142,17 @@ module.exports = {
                                 var data = _create_final_file(req, res, flights, _destination_filename);
 
                                 if (data.result) {
-                                    archived_flights.create({
+                                    flights_archived.create({
                                         uav_id: body_data.uavid,
                                         flight_id: flights.id
-                                    }).then(archived_flights => {
-                                        console.log('entry created successfully in archived_flights table');
+                                    }).then(flights_archived => {
+                                        console.log('entry created successfully in flights_archived table');
                                         res.status(200).send({ 'result': true, 'flight_id': flights.id, 'destination filename': _destination_filename });
                                     }).catch(error => {
                                         console.log(error);
-                                        console.log('error in creating row in the archived_flights table');
+                                        console.log('error in creating row in the flights_archived table');
                                         res.status(200).send({ 'result': false, 'message': 'Error in updating the destination filename', 'flight_id': flights.id, 'destination filename': _destination_filename });
                                     });
-
-                                    res.status(200).send({ 'result': true, 'flight_id': flights.id, 'destination filename': _destination_filename });
                                 } else {
                                     res.status(200).send({ 'result': false, 'message': data.message, 'flight_id': flights.id, 'destination filename': _destination_filename });
                                 }
@@ -666,29 +664,35 @@ module.exports = {
 
     updateUntraceableData(req, res) {
 
-        var flight_id = req.body.flight_id;
+        var flightId = req.body.flight_id;
         var data_untraceable = req.body.data_untraceable;
         var metadata_untraceable = req.body.metadata_untraceable;
 
-        return archived_flights.findById(flight_id)
-            .then(archived_flight => {
-                if (!archived_flight) {
-                    res.status(404).send('Flight not found with the id : ' + flight_id);
+        return flights_archived.findAll({
+                attributes: ['id', 'uav_id', 'flight_id', 'data', 'metadata'],
+                where: {
+                    flight_id: flightId
+                }
+            })
+            .then(flights_archived => {
+
+                if (flights_archived && flights_archived == 0) {
+                    res.status(404).send('Flight not found with the id : ' + flightId);
                     return;
                 }
 
-                if (archived_flight && archived_flight.length > 0) {
-                    res.status(404).send('Found more than one entry in the archived flights for the flight with id : ' + flight_id);
+                if (flights_archived && flights_archived.length > 1) {
+                    res.status(404).send('Found more than one entry in the archived flights for the flight with id : ' + flightId);
                     return;
                 }
 
-                return archived_flight.update({
+                return flights_archived[0].update({
                         data: data_untraceable,
                         metadata: metadata_untraceable
                     })
-                    .then(archived_flight => {
+                    .then(flights_archived => {
                         //TODO : updateUntraceableData that will be passed from analysis module
-                        return res.status(200).send('archived_flights update successully for flight id ' + archived_flight.flight_id);
+                        return res.status(200).send('flights_archived update successully for flight id ' + flights_archived.flight_id);
                     })
                     .catch(error => {
                         console.log(error);

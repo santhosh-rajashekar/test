@@ -2,7 +2,6 @@
 
 const partnumber = require('../models').part_numbers;
 const flights = require('../models').flights;
-const archived_flights = require('../models').archived_flights;
 const datauavs = require('../models').datauavs;
 const partnumberController = require('./partnumber');
 const uavhistories = require('../models').uavhistories;
