@@ -1,5 +1,6 @@
 "use strict";
 const notificationController = require('./notifier');
+const weatherInfoProvider = require('./weather');
 const flights = require('../models').flights;
 const flights_archived = require('../models').flights_archived;
 const datauavs = require('../models').datauavs;
@@ -12,6 +13,8 @@ const moment = require('moment');
 var _ = require('lodash');
 const Sequelize = require('sequelize');
 const sequelize = require('../models/index').sequelize;
+const DarkSky = require('dark-sky')
+const darksky = new DarkSky('6cea8061798b4f6b5aba44820ca9013b');
 
 const Op = Sequelize.Op;
 
@@ -45,7 +48,6 @@ const statusCheckedStorage = multer.diskStorage({
     }
 });
 
-
 const upload = multer({
     dest: DIR_UPLOADS,
     storage: storage
@@ -55,6 +57,26 @@ const statusFileUpload = multer({
     dest: DIR_UPLOADS,
     storage: statusCheckedStorage
 }).single('file');
+
+var updateFlightData = function(res, flight, result) {
+
+    flight.data = result.updated_data;
+
+    flight.update({
+            data: result.updated_data
+        })
+        .then(flight => {
+            if (result.status) {
+                res.status(200).send('flight updated successfully');
+            } else {
+                res.status(500).send('flight updated successfully, but there is an error in updating the weather data ' + result.message);
+            }
+        })
+        .catch(error => {
+            console.log(error);
+            res.status(500).send(error);
+        });
+};
 
 module.exports = {
     create(req, res) {
@@ -720,19 +742,10 @@ module.exports = {
                     return;
                 }
 
-                flight.data = data_to_update;
+                weatherInfoProvider.fetchWeatherData(data_to_update).then((result) => {
+                    updateFlightData(res, flight, result);
+                });
 
-                return flight.update({
-                        data: data_to_update
-                    })
-                    .then(flight => {
-                        //TODO : updateUntraceableData that will be passed from analysis module
-                        return res.status(200).send('flight update successully');
-                    })
-                    .catch(error => {
-                        console.log(error);
-                        res.status(500).send(error);
-                    });
             })
             .catch(error => {
                 console.log(error);
