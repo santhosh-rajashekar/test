@@ -1,6 +1,6 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
-    var flights_archived = sequelize.define('flights_archived', {
+    var flights_archived = sequelize.define('flights_deactive', {
         uav_id: DataTypes.INTEGER,
         flight_id: DataTypes.INTEGER,
         metadata: DataTypes.JSONB,

@@ -1,8 +1,8 @@
 'use strict';
 const Sequelize = require('sequelize');
-const datauavs = require('../models').datauavs;
-const flights = require('../models').flights;
-const uavhistories = require('../models').uavhistories;
+const datauavs = require('../models').uav_config_current;
+const flights = require('../models').flights_active;
+const uavhistories = require('../models').uav_config_history;
 const generateSerialNumber = require('../services').generateSerialNumber;
 const uavRepository = require('../repositories').uav;
 const partnumberController = require('./partnumber');
@@ -50,7 +50,7 @@ module.exports = {
             .findAll({
                 include: [{
                     model: flights,
-                    as: 'flights',
+                    as: 'flights_active',
                     where: {
                         is_archived: false
                     },
@@ -63,7 +63,7 @@ module.exports = {
                     is_archived: false
                 },
                 order: [
-                    ['flights', 'id', 'ASC']
+                    ['flights_active', 'id', 'ASC']
                 ]
             })
             .then(datauavs => {
@@ -74,10 +74,10 @@ module.exports = {
                     let _last_flight_id = null;
                     let _uploaded_flights = 0;
 
-                    if (datauav.flights.length) {
-                        _uploaded_flights = datauav.flights.length;
+                    if (datauav.flights_active.length) {
+                        _uploaded_flights = datauav.flights_active.length;
 
-                        let _last_flight = datauav.flights[datauav.flights.length - 1];
+                        let _last_flight = datauav.flights_active[datauav.flights_active.length - 1];
 
                         if (_last_flight.data && _last_flight.data.status) {
                             _last_status = _last_flight.data.status;
@@ -102,7 +102,7 @@ module.exports = {
                         data: datauav.data,
                         uav_id: datauav.id,
                         info: {
-                            flight_hours: datauav.flights.reduce((prevVal, flight) => {
+                            flight_hours: datauav.flights_active.reduce((prevVal, flight) => {
                                 let flight_hours = 0;
                                 if (flight && flight.data && +flight.data.flight_hours) {
                                     flight_hours = +flight.data.flight_hours;
@@ -110,7 +110,7 @@ module.exports = {
 
                                 return +prevVal + flight_hours;
                             }, 0),
-                            flight_cycles: datauav.flights.reduce((prevVal, flight) => {
+                            flight_cycles: datauav.flights_active.reduce((prevVal, flight) => {
                                 let flight_cycles = 0;
                                 if (flight && flight.data && +flight.data.flight_cycles) {
                                     flight_cycles = +flight.data.flight_cycles;

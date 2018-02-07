@@ -1,9 +1,9 @@
 "use strict";
 const notificationController = require('./notifier');
 const weatherInfoProvider = require('./weather');
-const flights = require('../models').flights;
+const flights = require('../models').flights_active;
 const flights_archived = require('../models').flights_archived;
-const datauavs = require('../models').datauavs;
+const datauavs = require('../models').uav_config_current;
 const partnumberController = require('./partnumber');
 const express = require('express');
 const multer = require('multer');
@@ -13,8 +13,6 @@ const moment = require('moment');
 var _ = require('lodash');
 const Sequelize = require('sequelize');
 const sequelize = require('../models/index').sequelize;
-const DarkSky = require('dark-sky')
-const darksky = new DarkSky('6cea8061798b4f6b5aba44820ca9013b');
 
 const Op = Sequelize.Op;
 
@@ -609,7 +607,7 @@ module.exports = {
                         return flig.id;
                     });
 
-                    sequelize.query("SELECT uav_id, data->>'status' AS lastFlightStatus FROM flights WHERE flights.id IN (:flight_ids);", { replacements: { flight_ids: ids }, type: Sequelize.QueryTypes.SELECT })
+                    sequelize.query("SELECT uav_id, data->>'status' AS lastFlightStatus FROM flights_active WHERE flights_active.id IN (:flight_ids);", { replacements: { flight_ids: ids }, type: Sequelize.QueryTypes.SELECT })
                         .then(results => {
                             res.status(200).send(JSON.stringify(results));
                         })
@@ -628,7 +626,7 @@ module.exports = {
         let ids = req.body.flight_ids;
 
         try {
-            sequelize.query("SELECT id AS flight_id, uav_id, user_id, filename, filesize, file_md5_hash, metadata FROM flights WHERE flights.id IN (:flight_ids);", { replacements: { flight_ids: ids }, type: Sequelize.QueryTypes.SELECT })
+            sequelize.query("SELECT id AS flight_id, uav_id, user_id, filename, filesize, file_md5_hash, metadata FROM flights_active WHERE flights_active.id IN (:flight_ids);", { replacements: { flight_ids: ids }, type: Sequelize.QueryTypes.SELECT })
                 .then(results => {
                     res.status(200).send(JSON.stringify(results));
                 })
@@ -663,10 +661,10 @@ module.exports = {
                     selectString += ',' + fields[i];
                 }
             }
-            selectString += " FROM flights WHERE flights.id IN (:flight_ids);";
+            selectString += " FROM flights_active WHERE flights_active.id IN (:flight_ids);";
 
         } else {
-            selectString = "SELECT id AS flight_id, uav_id, user_id, filename, filesize, file_md5_hash, metadata FROM flights WHERE flights.id IN (:flight_ids);";
+            selectString = "SELECT id AS flight_id, uav_id, user_id, filename, filesize, file_md5_hash, metadata FROM flights_active WHERE flights_active.id IN (:flight_ids);";
         }
 
         try {
