@@ -1,6 +1,6 @@
 'use strict';
 var io = require('socket.io')();
-const flights = require('../server/models').flights;
+const flights = require('../server/models').flights_active;
 const notificationController = require('../server/controllers/notifier');
 var clients = [];
 var sockets = new Set();
