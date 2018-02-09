@@ -3,6 +3,8 @@ module.exports = (sequelize, DataTypes) => {
     var uavhistory = sequelize.define('uav_config_history', {
         history: DataTypes.JSONB,
         uav_id: DataTypes.INTEGER
+    }, {
+        freezeTableName: true
     });
 
     uavhistory.associate = (models) => {
