@@ -399,7 +399,7 @@ module.exports = {
                     message = message + '<br><br>' + 'Filenames :';
 
                     for (var i = 0; i < flights.length; i++) {
-                        message = message + '\n' + flights[i].dataValues.filename;
+                        message = message + ' \n ' + flights[i].dataValues.filename;
 
                         flights[i].update({
                             data: { "status": 6 },
