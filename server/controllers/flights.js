@@ -394,7 +394,7 @@ module.exports = {
                     console.log(flights.length + ' flights found');
 
                     var message = 'Flights with below details have not received any analyzed results within the expected time';
-                    message = message + '<br><br>' + 'Filenames :';
+                    message = message + '-->' + 'Filenames :';
 
                     for (var i = 0; i < flights.length; i++) {
                         message = message + ' \n ' + flights[i].dataValues.filename;
