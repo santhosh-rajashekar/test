@@ -244,7 +244,7 @@ module.exports = {
         getUAVIdsWithPartNumber(partNumber).then(listOfUavId => {
 
             if (listOfUavId.length > 0) {
-                sequelize.query("SELECT SUM(CAST(data->>'flight_hours' AS REAL)) AS TotalFlightHours, SUM(CAST(data->>'flight_cycles' AS REAL)) AS TotalFlightCycles FROM flights WHERE flights.uav_id IN (:uav_ids);", { replacements: { uav_ids: listOfUavId }, type: Sequelize.QueryTypes.SELECT })
+                sequelize.query("SELECT SUM(CAST(data->>'flight_hours' AS REAL)) AS TotalFlightHours, SUM(CAST(data->>'flight_cycles' AS REAL)) AS TotalFlightCycles FROM flights_active WHERE flights_active.uav_id IN (:uav_ids);", { replacements: { uav_ids: listOfUavId }, type: Sequelize.QueryTypes.SELECT })
                     .then(results => {
                         res.status(200).send(JSON.stringify(results));
                     })
@@ -262,7 +262,7 @@ module.exports = {
         getUAVIdsWithPartNumberAndPosition(partNumber, position).then(listOfUavId => {
 
             if (listOfUavId.length > 0) {
-                sequelize.query("SELECT SUM(CAST(data->>'flight_hours' AS REAL)) AS TotalFlightHours, SUM(CAST(data->>'flight_cycles' AS REAL)) AS TotalFlightCycles FROM flights WHERE flights.uav_id IN (:uav_ids);", { replacements: { uav_ids: listOfUavId }, type: Sequelize.QueryTypes.SELECT })
+                sequelize.query("SELECT SUM(CAST(data->>'flight_hours' AS REAL)) AS TotalFlightHours, SUM(CAST(data->>'flight_cycles' AS REAL)) AS TotalFlightCycles FROM flights_active WHERE flights_active.uav_id IN (:uav_ids);", { replacements: { uav_ids: listOfUavId }, type: Sequelize.QueryTypes.SELECT })
                     .then(results => {
                         res.status(200).send(JSON.stringify(results));
                     })
@@ -279,7 +279,7 @@ module.exports = {
         getUAVIdsWithSerialNumber(serialNumber).then(listOfUavId => {
 
             if (listOfUavId.length > 0) {
-                sequelize.query("SELECT SUM(CAST(data->>'flight_hours' AS REAL)) AS TotalFlightHours, SUM(CAST(data->>'flight_cycles' AS REAL)) AS TotalFlightCycles FROM flights WHERE flights.uav_id IN (:uav_ids);", { replacements: { uav_ids: listOfUavId }, type: Sequelize.QueryTypes.SELECT })
+                sequelize.query("SELECT SUM(CAST(data->>'flight_hours' AS REAL)) AS TotalFlightHours, SUM(CAST(data->>'flight_cycles' AS REAL)) AS TotalFlightCycles FROM flights_active WHERE flights_active.uav_id IN (:uav_ids);", { replacements: { uav_ids: listOfUavId }, type: Sequelize.QueryTypes.SELECT })
                     .then(results => {
                         res.status(200).send(JSON.stringify(results));
                     })
@@ -296,7 +296,7 @@ module.exports = {
         getUAVIdsWithSerialNumber(serialNumber).then(listOfUavId => {
 
             if (listOfUavId.length > 0) {
-                sequelize.query("SELECT data->>'location' AS FlightLocations FROM flights WHERE flights.uav_id IN (:uav_ids) and data->>'location' != '' GROUP BY data->>'location';", { replacements: { uav_ids: listOfUavId }, type: Sequelize.QueryTypes.SELECT })
+                sequelize.query("SELECT data->>'location' AS FlightLocations FROM flights_active WHERE flights_active.uav_id IN (:uav_ids) and data->>'location' != '' GROUP BY data->>'location';", { replacements: { uav_ids: listOfUavId }, type: Sequelize.QueryTypes.SELECT })
                     .then(results => {
                         res.status(200).send(JSON.stringify(results));
                     });
@@ -677,7 +677,7 @@ module.exports = {
 
             if (listOfUavId.length > 0) {
 
-                sequelize.query("SELECT data->>'status' AS Status FROM flights WHERE flights.uav_id IN (:uav_ids) and data != 'null';", { replacements: { uav_ids: listOfUavId }, type: Sequelize.QueryTypes.SELECT })
+                sequelize.query("SELECT data->>'status' AS Status FROM flights_active WHERE  flights_active.uav_id IN (:uav_ids) and data != 'null';", { replacements: { uav_ids: listOfUavId }, type: Sequelize.QueryTypes.SELECT })
                     .then(results => {
 
                         if (results && results.length) {
