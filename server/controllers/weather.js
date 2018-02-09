@@ -10,6 +10,12 @@ module.exports = {
         return new Promise((resolve, reject) => {
 
             var result = { 'status': true, 'message': '', 'updated_data': data };
+
+            //Note : weatherInfo is computed by Analysis module, look for weatherInfo only if it is missing
+            if (data && data.weatherInfo) {
+                resolve(result);
+            }
+
             var latitude = data.lat;
             var longitude = data.lng;
             var flight_date = data.flight_date;
