@@ -1,6 +1,6 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
-    var flights = sequelize.define('flights', {
+    var flights = sequelize.define('flights_active', {
         uav_id: DataTypes.INTEGER,
         metadata: DataTypes.JSONB,
         data: DataTypes.JSONB,
@@ -10,10 +10,12 @@ module.exports = (sequelize, DataTypes) => {
         filesize: DataTypes.BIGINT,
         user_id: DataTypes.INTEGER,
         processed_state: DataTypes.JSONB
+    }, {
+        freezeTableName: true
     });
 
     flights.associate = (models) => {
-        flights.belongsTo(models.datauavs, {
+        flights.belongsTo(models.uav_config_current, {
             foreignKey: 'uav_id',
             onDelete: 'CASCADE'
         });

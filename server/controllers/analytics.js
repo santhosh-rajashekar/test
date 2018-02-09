@@ -1,10 +1,10 @@
 'use strict';
 
-const partnumber = require('../models').part_numbers;
-const flights = require('../models').flights;
-const datauavs = require('../models').datauavs;
+const partnumber = require('../models').uav_config_meta;
+const flights = require('../models').flights_active;
+const datauavs = require('../models').uav_config_current;
 const partnumberController = require('./partnumber');
-const uavhistories = require('../models').uavhistories;
+const uavhistories = require('../models').uav_config_history;
 
 const express = require('express');
 const mailer = require('express-mailer');

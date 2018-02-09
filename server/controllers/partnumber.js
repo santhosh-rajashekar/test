@@ -1,6 +1,6 @@
-const partnumber = require('../models').part_numbers;
+const partnumber = require('../models').uav_config_meta;
 const generateSerialNumber = require('../services').generateSerialNumber;
-const datauavs = require('../models').datauavs;
+const datauavs = require('../models').uav_config_current;
 const uavRepository = require('../repositories').uav;
 
 module.exports = {
@@ -10,9 +10,10 @@ module.exports = {
         return partnumber
             .create({
                 id: req.body.id,
-                model: req.body.model,
-                name: req.body.name,
-                data: req.body.data
+                UAV_Model: req.body.model,
+                UAV_Manufacturer: req.body.name,
+                UAV_Version: null,
+                UAV_Configuration: req.body.data
             })
             .then(partnumber => res.status(200).send(partnumber))
             .catch(error => res.status(400).send(error));
@@ -212,8 +213,8 @@ module.exports = {
         return partnumber
             .findAll({
                 where: {
-                    model: req.body.model,
-                    name: req.body.name
+                    UAV_Model: req.body.model,
+                    UAV_Manufacturer: req.body.name
                 }
             }).then(partnumber => {
 
@@ -221,7 +222,7 @@ module.exports = {
                     return res.status(400).send('Entity does not found');
                 }
 
-                let components = partnumber[0].toJSON().data;
+                let components = partnumber[0].toJSON().UAV_Configuration;
                 components.uav_id = req.body.uav_id;
                 console.log('called createDefaultUavDataComponent');
 
